@@ -2,12 +2,14 @@
   "git": {
     "commitMessage": "chore: release v${version}",
     "tagName": "v${version}",
-    "requireCleanWorkingDir": false,
-    "requireUpstream": false
+    "tagAnnotation": "Release v${version}",
+    "push": true,
+    "requireBranch": ["main", "develop"]
   },
   "github": {
     "release": true,
-    "releaseName": "v${version}"
+    "releaseName": "v${version}",
+    "autoGenerate": true
   },
   "npm": {
     "publish": true,
