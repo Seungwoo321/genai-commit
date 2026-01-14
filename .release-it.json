@@ -2,12 +2,14 @@
   "git": {
     "commitMessage": "chore: release v${version}",
     "tagName": "v${version}",
-    "requireCleanWorkingDir": false,
-    "requireUpstream": false
+    "tagAnnotation": "Release v${version}",
+    "push": true,
+    "requireBranch": ["main", "develop"]
   },
   "github": {
     "release": true,
-    "releaseName": "v${version}"
+    "releaseName": "v${version}",
+    "autoGenerate": true
   },
   "npm": {
     "publish": true,
@@ -15,8 +17,24 @@
     "publishArgs": ["--provenance"],
     "skipChecks": true
   },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          { "type": "feat", "section": "Features" },
+          { "type": "fix", "section": "Bug Fixes" },
+          { "type": "perf", "section": "Performance" },
+          { "type": "refactor", "section": "Refactoring" },
+          { "type": "docs", "section": "Documentation" },
+          { "type": "chore", "hidden": true }
+        ]
+      },
+      "infile": "CHANGELOG.md"
+    }
+  },
   "hooks": {
-    "before:init": ["npm run build"],
-    "after:bump": ["npm run build"]
+    "before:init": ["pnpm build"],
+    "after:bump": ["pnpm build"]
   }
 }
