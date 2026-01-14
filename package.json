@@ -1,0 +1,74 @@
+{
+  "name": "genco-cli",
+  "version": "0.0.0",
+  "description": "AI-powered commit message generator using Claude Code or Cursor CLI",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "genco": "./bin/genco.js"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts'",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "release": "release-it",
+    "release:beta": "release-it --preRelease=beta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Seungwoo321/genco-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Seungwoo321/genco-cli/issues"
+  },
+  "homepage": "https://github.com/Seungwoo321/genco-cli#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "ai",
+    "claude",
+    "cursor",
+    "conventional-commits",
+    "jira",
+    "cli",
+    "commit-message",
+    "generator"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^9.2.12",
+    "ora": "^8.0.1",
+    "simple-git": "^3.22.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "release-it": "^17.10.0",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}
