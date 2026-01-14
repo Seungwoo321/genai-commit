@@ -11,7 +11,9 @@
   },
   "npm": {
     "publish": true,
-    "provenance": true
+    "access": "public",
+    "publishArgs": ["--provenance"],
+    "skipChecks": true
   },
   "hooks": {
     "before:init": ["npm run build"],
