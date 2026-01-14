@@ -17,6 +17,22 @@
     "publishArgs": ["--provenance"],
     "skipChecks": true
   },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          { "type": "feat", "section": "Features" },
+          { "type": "fix", "section": "Bug Fixes" },
+          { "type": "perf", "section": "Performance" },
+          { "type": "refactor", "section": "Refactoring" },
+          { "type": "docs", "section": "Documentation" },
+          { "type": "chore", "hidden": true }
+        ]
+      },
+      "infile": "CHANGELOG.md"
+    }
+  },
   "hooks": {
     "before:init": ["npm run build"],
     "after:bump": ["npm run build"]
