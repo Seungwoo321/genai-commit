@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * genco CLI - AI-powered commit message generator
+ * gencommit CLI - AI-powered commit message generator
  */
 
 import { Command } from 'commander';
@@ -11,11 +11,11 @@ import { statusCommand } from './commands/status.js';
 const program = new Command();
 
 program
-  .name('genco')
+  .name('gencommit')
   .description('AI-powered commit message generator using Claude Code or Cursor CLI')
   .version('1.0.0');
 
-// Main generation command: genco <provider>
+// Main generation command: gencommit <provider>
 program
   .argument('<provider>', 'AI provider (claude-code or cursor-cli)')
   .option('--lang <lang>', 'Set both title and message language (en|ko)')
@@ -24,13 +24,13 @@ program
   .option('--model <model>', 'Model to use (cursor-cli: gemini-3-flash, sonnet-4.5, etc.)')
   .action(generateCommand);
 
-// Login command: genco login <provider>
+// Login command: gencommit login <provider>
 program
   .command('login <provider>')
   .description('Authenticate with the provider')
   .action(loginCommand);
 
-// Status command: genco status <provider>
+// Status command: gencommit status <provider>
 program
   .command('status <provider>')
   .description('Check authentication status')
@@ -41,14 +41,14 @@ program.addHelpText(
   'after',
   `
 Examples:
-  $ genco claude-code              # Generate with Claude Code
-  $ genco cursor-cli               # Generate with Cursor CLI
-  $ genco cursor-cli --model sonnet-4.5
-  $ genco claude-code --lang ko    # Korean title and message
+  $ gencommit claude-code              # Generate with Claude Code
+  $ gencommit cursor-cli               # Generate with Cursor CLI
+  $ gencommit cursor-cli --model sonnet-4.5
+  $ gencommit claude-code --lang ko    # Korean title and message
 
-  $ genco login cursor-cli         # Login to Cursor
-  $ genco login claude-code        # Setup Claude token
-  $ genco status claude-code       # Check Claude status
+  $ gencommit login cursor-cli         # Login to Cursor
+  $ gencommit login claude-code        # Setup Claude token
+  $ gencommit status claude-code       # Check Claude status
 
 Interactive options:
   [y] Commit all proposed commits

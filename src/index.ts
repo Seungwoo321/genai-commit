@@ -1,5 +1,5 @@
 /**
- * genco-cli - AI-powered commit message generator
+ * gencommit - AI-powered commit message generator
  *
  * Public API exports for programmatic usage
  */

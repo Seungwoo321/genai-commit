@@ -1,10 +1,10 @@
-# genco-cli
+# gencommit
 
 AI-powered commit message generator using Claude Code or Cursor CLI.
 
-[![npm version](https://badge.fury.io/js/genco-cli.svg)](https://www.npmjs.com/package/genco-cli)
+[![npm version](https://badge.fury.io/js/gencommit.svg)](https://www.npmjs.com/package/gencommit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub](https://img.shields.io/github/stars/Seungwoo321/genco-cli?style=social)](https://github.com/Seungwoo321/genco-cli)
+[![GitHub](https://img.shields.io/github/stars/Seungwoo321/gencommit?style=social)](https://github.com/Seungwoo321/gencommit)
 
 ## Features
 
@@ -14,6 +14,33 @@ AI-powered commit message generator using Claude Code or Cursor CLI.
 - **Jira integration** - Assign Jira tickets to commits and auto-merge related changes
 - **Interactive workflow** - Review, provide feedback, and refine before committing
 - **Smart file grouping** - Intelligently splits changes into logical commits
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[Start: gencommit] --> B[Collect Git Changes]
+    B --> C{Changes Found?}
+    C -->|No| D[Exit: No changes]
+    C -->|Yes| E[Generate Tree Summary]
+    E --> F[Build AI Prompt]
+    F --> G{Select Provider}
+    G -->|Claude Code| H[Claude Code CLI]
+    G -->|Cursor CLI| I[Cursor CLI]
+    H --> J[Parse JSON Response]
+    I --> K[Parse Delimiter Response]
+    J --> L[Display Proposed Commits]
+    K --> L
+    L --> M{User Action}
+    M -->|y| N[Execute git add + commit]
+    M -->|n| O[Cancel]
+    M -->|f| P[Get Feedback]
+    M -->|t| Q[Assign Jira Tickets]
+    P --> F
+    Q --> R[Merge Same-Ticket Commits]
+    R --> L
+    N --> S[Done]
+```
 
 ## Prerequisites
 
@@ -26,10 +53,10 @@ You need at least one of these AI CLI tools installed:
 
 ```bash
 # Global installation
-npm install -g genco-cli
+npm install -g gencommit
 
 # Or use directly with npx (no installation required)
-npx genco-cli claude-code
+npx gencommit claude-code
 ```
 
 ## Usage
@@ -38,33 +65,33 @@ npx genco-cli claude-code
 
 ```bash
 # Using Claude Code
-genco claude-code
+gencommit claude-code
 
 # Using Cursor CLI
-genco cursor-cli
+gencommit cursor-cli
 
 # With specific model (Cursor only)
-genco cursor-cli --model sonnet-4.5
+gencommit cursor-cli --model sonnet-4.5
 
 # Set language for both title and message
-genco claude-code --lang ko
+gencommit claude-code --lang ko
 
 # Set languages separately
-genco claude-code --title-lang en --message-lang ko
+gencommit claude-code --title-lang en --message-lang ko
 ```
 
 ### Authentication
 
 ```bash
 # Login to Cursor
-genco login cursor-cli
+gencommit login cursor-cli
 
 # Setup Claude token
-genco login claude-code
+gencommit login claude-code
 
 # Check status
-genco status claude-code
-genco status cursor-cli
+gencommit status claude-code
+gencommit status cursor-cli
 ```
 
 ### Interactive Options
@@ -99,12 +126,12 @@ cd my-project
 echo "console.log('hello');" >> src/index.js
 
 # Generate and create commits
-genco claude-code
+gencommit claude-code
 ```
 
 ### With Jira Integration
 
-1. Run `genco claude-code`
+1. Run `gencommit claude-code`
 2. Review proposed commits
 3. Press `t` to assign Jira tickets
 4. Enter Jira URLs for each commit
@@ -113,7 +140,7 @@ genco claude-code
 
 ### Providing Feedback
 
-1. Run `genco cursor-cli`
+1. Run `gencommit cursor-cli`
 2. Review proposed commits
 3. Press `f` to provide feedback
 4. Enter your feedback (e.g., "Split the auth changes into separate commits")
@@ -129,7 +156,7 @@ import {
   getCurrentBranch,
   getGitStatus,
   generateFullTreeSummary,
-} from 'genco-cli';
+} from 'gencommit';
 
 // Create a provider
 const provider = createProvider('claude-code', { timeout: 120000 });

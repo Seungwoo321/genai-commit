@@ -1,12 +1,12 @@
 {
-  "name": "genco-cli",
+  "name": "gencommit",
   "version": "0.0.0",
   "description": "AI-powered commit message generator using Claude Code or Cursor CLI",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "genco": "./bin/genco.js"
+    "gencommit": "./bin/gencommit.js"
   },
   "files": [
     "dist",
@@ -32,12 +32,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Seungwoo321/genco-cli.git"
+    "url": "git+https://github.com/Seungwoo321/gencommit.git"
   },
   "bugs": {
-    "url": "https://github.com/Seungwoo321/genco-cli/issues"
+    "url": "https://github.com/Seungwoo321/gencommit/issues"
   },
-  "homepage": "https://github.com/Seungwoo321/genco-cli#readme",
+  "homepage": "https://github.com/Seungwoo321/gencommit#readme",
   "engines": {
     "node": ">=18.0.0"
   },
@@ -51,7 +51,8 @@
     "jira",
     "cli",
     "commit-message",
-    "generator"
+    "generator",
+    "gencommit"
   ],
   "author": "",
   "license": "MIT",
