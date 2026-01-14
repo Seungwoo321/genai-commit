@@ -34,7 +34,7 @@
     }
   },
   "hooks": {
-    "before:init": ["npm run build"],
-    "after:bump": ["npm run build"]
+    "before:init": ["pnpm build"],
+    "after:bump": ["pnpm build"]
   }
 }
