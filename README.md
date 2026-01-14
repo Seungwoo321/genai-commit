@@ -1,10 +1,10 @@
-# gencommit
+# genai-commit
 
 AI-powered commit message generator using Claude Code or Cursor CLI.
 
-[![npm version](https://badge.fury.io/js/gencommit.svg)](https://www.npmjs.com/package/gencommit)
+[![npm version](https://badge.fury.io/js/genai-commit.svg)](https://www.npmjs.com/package/genai-commit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub](https://img.shields.io/github/stars/Seungwoo321/gencommit?style=social)](https://github.com/Seungwoo321/gencommit)
+[![GitHub](https://img.shields.io/github/stars/Seungwoo321/genai-commit?style=social)](https://github.com/Seungwoo321/genai-commit)
 
 ## Features
 
@@ -19,7 +19,7 @@ AI-powered commit message generator using Claude Code or Cursor CLI.
 
 ```mermaid
 flowchart TD
-    A[Start: gencommit] --> B[Collect Git Changes]
+    A[Start: genai-commit] --> B[Collect Git Changes]
     B --> C{Changes Found?}
     C -->|No| D[Exit: No changes]
     C -->|Yes| E[Generate Tree Summary]
@@ -53,10 +53,10 @@ You need at least one of these AI CLI tools installed:
 
 ```bash
 # Global installation
-npm install -g gencommit
+npm install -g genai-commit
 
 # Or use directly with npx (no installation required)
-npx gencommit claude-code
+npx genai-commit claude-code
 ```
 
 ## Usage
@@ -65,33 +65,33 @@ npx gencommit claude-code
 
 ```bash
 # Using Claude Code
-gencommit claude-code
+genai-commit claude-code
 
 # Using Cursor CLI
-gencommit cursor-cli
+genai-commit cursor-cli
 
 # With specific model (Cursor only)
-gencommit cursor-cli --model sonnet-4.5
+genai-commit cursor-cli --model sonnet-4.5
 
 # Set language for both title and message
-gencommit claude-code --lang ko
+genai-commit claude-code --lang ko
 
 # Set languages separately
-gencommit claude-code --title-lang en --message-lang ko
+genai-commit claude-code --title-lang en --message-lang ko
 ```
 
 ### Authentication
 
 ```bash
 # Login to Cursor
-gencommit login cursor-cli
+genai-commit login cursor-cli
 
 # Setup Claude token
-gencommit login claude-code
+genai-commit login claude-code
 
 # Check status
-gencommit status claude-code
-gencommit status cursor-cli
+genai-commit status claude-code
+genai-commit status cursor-cli
 ```
 
 ### Interactive Options
@@ -126,12 +126,12 @@ cd my-project
 echo "console.log('hello');" >> src/index.js
 
 # Generate and create commits
-gencommit claude-code
+genai-commit claude-code
 ```
 
 ### With Jira Integration
 
-1. Run `gencommit claude-code`
+1. Run `genai-commit claude-code`
 2. Review proposed commits
 3. Press `t` to assign Jira tickets
 4. Enter Jira URLs for each commit
@@ -140,7 +140,7 @@ gencommit claude-code
 
 ### Providing Feedback
 
-1. Run `gencommit cursor-cli`
+1. Run `genai-commit cursor-cli`
 2. Review proposed commits
 3. Press `f` to provide feedback
 4. Enter your feedback (e.g., "Split the auth changes into separate commits")
@@ -156,7 +156,7 @@ import {
   getCurrentBranch,
   getGitStatus,
   generateFullTreeSummary,
-} from 'gencommit';
+} from 'genai-commit';
 
 // Create a provider
 const provider = createProvider('claude-code', { timeout: 120000 });

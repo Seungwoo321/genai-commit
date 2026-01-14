@@ -1,5 +1,5 @@
 /**
- * gencommit - AI-powered commit message generator
+ * genai-commit - AI-powered commit message generator
  *
  * Public API exports for programmatic usage
  */

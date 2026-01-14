@@ -1,12 +1,12 @@
 {
-  "name": "gencommit",
-  "version": "1.0.0-beta.2",
+  "name": "genai-commit",
+  "version": "0.0.0",
   "description": "AI-powered commit message generator using Claude Code or Cursor CLI",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "gencommit": "./bin/gencommit.js"
+    "genai-commit": "./bin/genai-commit.js"
   },
   "files": [
     "dist",
@@ -32,12 +32,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Seungwoo321/gencommit.git"
+    "url": "git+https://github.com/Seungwoo321/genai-commit.git"
   },
   "bugs": {
-    "url": "https://github.com/Seungwoo321/gencommit/issues"
+    "url": "https://github.com/Seungwoo321/genai-commit/issues"
   },
-  "homepage": "https://github.com/Seungwoo321/gencommit#readme",
+  "homepage": "https://github.com/Seungwoo321/genai-commit#readme",
   "engines": {
     "node": ">=18.0.0"
   },
@@ -52,7 +52,7 @@
     "cli",
     "commit-message",
     "generator",
-    "gencommit"
+    "genai-commit"
   ],
   "author": "",
   "license": "MIT",

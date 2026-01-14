@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * gencommit CLI - AI-powered commit message generator
+ * genai-commit CLI - AI-powered commit message generator
  */
 
 import { Command } from 'commander';
@@ -11,11 +11,11 @@ import { statusCommand } from './commands/status.js';
 const program = new Command();
 
 program
-  .name('gencommit')
+  .name('genai-commit')
   .description('AI-powered commit message generator using Claude Code or Cursor CLI')
   .version('1.0.0');
 
-// Main generation command: gencommit <provider>
+// Main generation command: genai-commit <provider>
 program
   .argument('<provider>', 'AI provider (claude-code or cursor-cli)')
   .option('--lang <lang>', 'Set both title and message language (en|ko)')
@@ -24,13 +24,13 @@ program
   .option('--model <model>', 'Model to use (cursor-cli: gemini-3-flash, sonnet-4.5, etc.)')
   .action(generateCommand);
 
-// Login command: gencommit login <provider>
+// Login command: genai-commit login <provider>
 program
   .command('login <provider>')
   .description('Authenticate with the provider')
   .action(loginCommand);
 
-// Status command: gencommit status <provider>
+// Status command: genai-commit status <provider>
 program
   .command('status <provider>')
   .description('Check authentication status')
@@ -41,14 +41,14 @@ program.addHelpText(
   'after',
   `
 Examples:
-  $ gencommit claude-code              # Generate with Claude Code
-  $ gencommit cursor-cli               # Generate with Cursor CLI
-  $ gencommit cursor-cli --model sonnet-4.5
-  $ gencommit claude-code --lang ko    # Korean title and message
+  $ genai-commit claude-code              # Generate with Claude Code
+  $ genai-commit cursor-cli               # Generate with Cursor CLI
+  $ genai-commit cursor-cli --model sonnet-4.5
+  $ genai-commit claude-code --lang ko    # Korean title and message
 
-  $ gencommit login cursor-cli         # Login to Cursor
-  $ gencommit login claude-code        # Setup Claude token
-  $ gencommit status claude-code       # Check Claude status
+  $ genai-commit login cursor-cli         # Login to Cursor
+  $ genai-commit login claude-code        # Setup Claude token
+  $ genai-commit status claude-code       # Check Claude status
 
 Interactive options:
   [y] Commit all proposed commits
