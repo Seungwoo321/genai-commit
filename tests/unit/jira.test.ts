@@ -9,19 +9,18 @@ describe('extractJiraKeys', () => {
     expect(keys).toEqual(['PROJ-123']);
   });
 
-  it('should extract multiple Jira keys', () => {
-    const input = 'https://jira.com/PROJ-123, https://jira.com/PROJ-456';
+  it('should extract the last Jira key from URL path', () => {
+    const input = 'https://jira.com/browse/PROJ-123/subtask/PROJ-456';
     const keys = extractJiraKeys(input);
 
-    expect(keys).toContain('PROJ-123');
-    expect(keys).toContain('PROJ-456');
+    expect(keys).toEqual(['PROJ-456']);
   });
 
-  it('should deduplicate keys', () => {
-    const input = 'PROJ-123 PROJ-123 PROJ-123';
+  it('should return the last key when multiple keys exist', () => {
+    const input = 'PROJ-123 PROJ-456 PROJ-789';
     const keys = extractJiraKeys(input);
 
-    expect(keys).toEqual(['PROJ-123']);
+    expect(keys).toEqual(['PROJ-789']);
   });
 
   it('should return empty array for no matches', () => {
@@ -30,13 +29,25 @@ describe('extractJiraKeys', () => {
     expect(keys).toEqual([]);
   });
 
-  it('should handle various Jira key formats', () => {
-    const input = 'AS-1 ABC-123 LONGPROJECT-99999';
+  it('should handle various Jira key formats with mixed case and numbers', () => {
+    const input = 'https://jira.com/browse/Proj123-456';
     const keys = extractJiraKeys(input);
 
-    expect(keys).toContain('AS-1');
-    expect(keys).toContain('ABC-123');
-    expect(keys).toContain('LONGPROJECT-99999');
+    expect(keys).toEqual(['Proj123-456']);
+  });
+
+  it('should handle lowercase project codes', () => {
+    const input = 'https://jira.com/browse/abc-123';
+    const keys = extractJiraKeys(input);
+
+    expect(keys).toEqual(['abc-123']);
+  });
+
+  it('should handle alphanumeric project codes', () => {
+    const input = 'https://jira.com/browse/AA1-999';
+    const keys = extractJiraKeys(input);
+
+    expect(keys).toEqual(['AA1-999']);
   });
 });
 
@@ -68,11 +79,13 @@ describe('isValidJiraKey', () => {
   it('should validate correct Jira key', () => {
     expect(isValidJiraKey('PROJ-123')).toBe(true);
     expect(isValidJiraKey('AB-1')).toBe(true);
+    expect(isValidJiraKey('proj-123')).toBe(true);
+    expect(isValidJiraKey('Abc123-456')).toBe(true);
   });
 
   it('should reject invalid Jira key', () => {
-    expect(isValidJiraKey('proj-123')).toBe(false);
     expect(isValidJiraKey('PROJ123')).toBe(false);
     expect(isValidJiraKey('PROJ-')).toBe(false);
+    expect(isValidJiraKey('-123')).toBe(false);
   });
 });

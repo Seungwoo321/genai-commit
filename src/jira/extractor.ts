@@ -2,21 +2,21 @@
  * Jira key extraction utilities
  */
 
-// Pattern to match Jira issue keys (e.g., AS-123, PROJ-456)
-const JIRA_KEY_PATTERN = /[A-Z]+-\d+/g;
+// Pattern to match Jira issue keys (e.g., AS-123, Proj-456, abc123-789)
+const JIRA_KEY_PATTERN = /[A-Za-z0-9]+-\d+/g;
 
 /**
- * Extract Jira keys from a URL or text
+ * Extract the last Jira key from a URL path or text
  * @param input URL or text containing Jira keys
- * @returns Array of unique Jira keys
+ * @returns Array with the last Jira key found (for path-based extraction)
  */
 export function extractJiraKeys(input: string): string[] {
   const matches = input.match(JIRA_KEY_PATTERN);
   if (!matches) {
     return [];
   }
-  // Remove duplicates
-  return [...new Set(matches)];
+  // Return only the last match (path-based: last segment is the ticket)
+  return [matches[matches.length - 1]];
 }
 
 /**
@@ -37,6 +37,6 @@ export function hasJiraKeys(input: string): boolean {
  * Validate if a string is a valid Jira key
  */
 export function isValidJiraKey(key: string): boolean {
-  const pattern = /^[A-Z]+-\d+$/;
+  const pattern = /^[A-Za-z0-9]+-\d+$/;
   return pattern.test(key);
 }
