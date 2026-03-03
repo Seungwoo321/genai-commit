@@ -64,4 +64,5 @@ jobs:
         run: |
           gh pr create --base develop --head main \
             --title "chore: sync release from main [skip ci]" \
-            --body "Sync release commits from main to develop. [skip ci]" || true
+            --body "Sync release commits from main to develop. [skip ci]" \
+            && gh pr merge --merge || true

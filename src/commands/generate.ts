@@ -14,6 +14,7 @@ import {
   getAllChangedFiles,
   hasChanges,
   getRemoteStatus,
+  stageAllChanges,
 } from '../git/status.js';
 import { generateFullTreeSummary } from '../git/tree.js';
 import { getDiffContent } from '../git/diff.js';
@@ -71,6 +72,9 @@ export async function generateCommand(
       process.exit(1);
     }
   }
+
+  // Stage all changes for consistent diff analysis
+  await stageAllChanges();
 
   // Build config
   const config: GencoConfig = {

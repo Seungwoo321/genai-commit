@@ -25,7 +25,7 @@ export class CursorCLIProvider implements AIProvider {
 
     const result = await execCommand(
       'agent',
-      ['-p', '--model', this.model, '--output-format', 'text'],
+      ['-p', '--trust', '--model', this.model, '--output-format', 'text'],
       {
         input: fullInput,
         timeout: this.timeout,

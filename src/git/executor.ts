@@ -2,7 +2,7 @@
  * Git commit execution
  */
 
-import { getGit } from './status.js';
+import { getGit, resetStaging } from './status.js';
 import type { Commit } from '../types/commit.js';
 import { logger, colors } from '../utils/logger.js';
 import fs from 'fs';
@@ -48,6 +48,9 @@ export async function executeCommit(
     if (commit.jiraKey && !title.includes(`(${commit.jiraKey})`)) {
       title = `${title} (${commit.jiraKey})`;
     }
+
+    // Reset staging area to ensure only intended files are committed
+    await resetStaging(cwd);
 
     // Stage files
     logger.info('Staging files...');
