@@ -127,6 +127,26 @@ export interface RemoteStatus {
 }
 
 /**
+ * Stage all changes (git add -A)
+ */
+export async function stageAllChanges(cwd?: string): Promise<void> {
+  const git = getGit(cwd);
+  await git.add(['-A']);
+}
+
+/**
+ * Reset staging area (git reset HEAD)
+ */
+export async function resetStaging(cwd?: string): Promise<void> {
+  const git = getGit(cwd);
+  try {
+    await git.reset(['HEAD']);
+  } catch {
+    // Ignore errors (e.g., no commits yet)
+  }
+}
+
+/**
  * Check remote tracking branch status
  * Returns info about whether local is behind/ahead of remote
  */
