@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.2.2-beta.0...v1.3.0-beta.0) (2026-03-03)
+
+### Features
+
+* **cursor:** add trust flag to CLI command ([e5fb702](https://github.com/Seungwoo321/genai-commit/commit/e5fb70222ac5a6a336776ee0fb44340cb8f430dd))
+* **git:** add automatic staging before diff analysis ([58e3142](https://github.com/Seungwoo321/genai-commit/commit/58e31427ccbf55246409f56161ef7febcf0b56dc))
+* **git:** add staging reset before commit execution ([598f8db](https://github.com/Seungwoo321/genai-commit/commit/598f8dbbcca70a58b93e4db618dbbfbd133509e6))
+
 ## [1.2.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.2.1...v1.2.2-beta.0) (2026-01-17)
 
 ## [1.2.1](https://github.com/Seungwoo321/genai-commit/compare/v1.2.0...v1.2.1) (2026-01-17)
