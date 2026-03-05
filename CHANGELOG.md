@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.3.1](https://github.com/Seungwoo321/genai-commit/compare/v1.3.1-beta.0...v1.3.1) (2026-03-05)
+
 ## [1.3.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.0...v1.3.1-beta.0) (2026-03-05)
 
 ### Bug Fixes
