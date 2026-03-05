@@ -35,8 +35,19 @@ export async function isGitRepository(cwd?: string): Promise<boolean> {
  */
 export async function getCurrentBranch(cwd?: string): Promise<string> {
   const git = getGit(cwd);
-  const branch = await git.revparse(['--abbrev-ref', 'HEAD']);
-  return branch.trim();
+  try {
+    const branch = await git.revparse(['--abbrev-ref', 'HEAD']);
+    return branch.trim();
+  } catch {
+    // No commits yet - HEAD doesn't exist
+    try {
+      // Get branch name from symbolic ref (works even without commits)
+      const ref = await git.raw(['symbolic-ref', '--short', 'HEAD']);
+      return ref.trim();
+    } catch {
+      return 'main';
+    }
+  }
 }
 
 /**

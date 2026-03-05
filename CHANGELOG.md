@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.0...v1.3.1-beta.0) (2026-03-05)
+
+### Bug Fixes
+
+* **git:** handle branch detection in empty repositories ([7197129](https://github.com/Seungwoo321/genai-commit/commit/719712979c77825b8d4cc71d07ea8101146ba489))
+
+### Refactoring
+
+* remove unused imports ([6e05569](https://github.com/Seungwoo321/genai-commit/commit/6e055699330e6c500e2319ff0e2500ea95d29a5e))
+
 ## [1.3.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.0-beta.0...v1.3.0) (2026-03-03)
 
 ## [1.3.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.2.2-beta.0...v1.3.0-beta.0) (2026-03-03)
