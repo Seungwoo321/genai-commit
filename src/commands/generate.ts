@@ -19,7 +19,7 @@ import {
 import { generateFullTreeSummary } from '../git/tree.js';
 import { getDiffContent } from '../git/diff.js';
 import { runInteractiveLoop } from '../ui/interactive.js';
-import { displayAnalysisStart, displayProgress, displayInputSize } from '../ui/display.js';
+import { displayAnalysisStart, displayProgress } from '../ui/display.js';
 import { validateFilesExist, validateTitleLength } from '../utils/validation.js';
 import { logger } from '../utils/logger.js';
 import { DEFAULT_CONFIG } from '../config/defaults.js';

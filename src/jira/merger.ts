@@ -9,7 +9,6 @@ import type { Commit } from '../types/commit.js';
 import type { AIProvider } from '../providers/types.js';
 import type { GencoConfig } from '../config/types.js';
 import { extractJiraKeys, formatJiraKeys } from './extractor.js';
-import { logger } from '../utils/logger.js';
 
 export interface JiraAssignment {
   commitIndex: number;

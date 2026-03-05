@@ -59,7 +59,7 @@ async function regenerateWithFeedback(
   provider: AIProvider,
   previousResponse: string,
   feedback: string,
-  config: GencoConfig
+  _config: GencoConfig
 ): Promise<Commit[]> {
   const feedbackInput = `Previous response:
 ${previousResponse}
@@ -81,7 +81,7 @@ export async function runInteractiveLoop(
   provider: AIProvider,
   initialCommits: Commit[],
   initialResponse: string,
-  gitResult: GitDiffResult,
+  _gitResult: GitDiffResult,
   config: GencoConfig
 ): Promise<void> {
   let commits = initialCommits;
