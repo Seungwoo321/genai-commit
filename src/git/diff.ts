@@ -2,7 +2,7 @@
  * Git diff extraction with size limits
  */
 
-import { getGit } from './status.js';
+import { getGit, hasCommits } from './status.js';
 import type { DiffOptions } from '../types/git.js';
 
 const DEFAULT_OPTIONS: DiffOptions = {
@@ -19,9 +19,11 @@ export async function getModifiedDiffs(
   cwd?: string
 ): Promise<string> {
   const git = getGit(cwd);
+  const hasExistingCommits = await hasCommits(cwd);
+  const diffRef = hasExistingCommits ? ['HEAD'] : ['--cached'];
 
   // Get list of modified files
-  const diffSummary = await git.diffSummary(['HEAD']);
+  const diffSummary = await git.diffSummary(diffRef);
   const modifiedFiles = diffSummary.files
     .filter((f) => !f.binary && 'changes' in f && (f as { changes: number }).changes > 0)
     .map((f) => f.file);
@@ -35,7 +37,7 @@ export async function getModifiedDiffs(
 
   for (const file of modifiedFiles) {
     try {
-      const fileDiff = await git.diff(['HEAD', '--', file]);
+      const fileDiff = await git.diff([...diffRef, '--', file]);
       const diffSize = fileDiff.length;
 
       if (currentSize + diffSize + 100 > maxSize) {
@@ -85,7 +87,9 @@ export async function getDiffContent(
 export async function getShortStat(cwd?: string): Promise<string> {
   const git = getGit(cwd);
   try {
-    const result = await git.diff(['--shortstat', 'HEAD']);
+    const hasExistingCommits = await hasCommits(cwd);
+    const diffRef = hasExistingCommits ? ['--shortstat', 'HEAD'] : ['--shortstat', '--cached'];
+    const result = await git.diff(diffRef);
     return result.trim();
   } catch {
     return '';
