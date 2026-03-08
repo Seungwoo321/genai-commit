@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.1...v1.4.0-beta.0) (2026-03-08)
+
+### Features
+
+* **git:** support diff operations for repos without commits ([42d7c03](https://github.com/Seungwoo321/genai-commit/commit/42d7c03ec1f1aec0b19830489a9dd996240a45f2))
+
 ## [1.3.1](https://github.com/Seungwoo321/genai-commit/compare/v1.3.1-beta.0...v1.3.1) (2026-03-05)
 
 ## [1.3.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.0...v1.3.1-beta.0) (2026-03-05)
