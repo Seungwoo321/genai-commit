@@ -121,6 +121,19 @@ export async function getAllChangedFiles(cwd?: string): Promise<Set<string>> {
 }
 
 /**
+ * Check if there are any commits in the repository
+ */
+export async function hasCommits(cwd?: string): Promise<boolean> {
+  const git = getGit(cwd);
+  try {
+    await git.revparse(['HEAD']);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check if there are any changes to commit
  */
 export async function hasChanges(cwd?: string): Promise<boolean> {
