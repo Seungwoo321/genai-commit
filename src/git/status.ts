@@ -166,14 +166,20 @@ export async function stageAllChanges(cwd?: string): Promise<void> {
 }
 
 /**
- * Reset staging area (git reset HEAD)
+ * Reset staging area
+ * Uses `git reset HEAD` for repos with commits,
+ * `git rm -r --cached .` for new repos without commits.
  */
 export async function resetStaging(cwd?: string): Promise<void> {
   const git = getGit(cwd);
-  try {
+  if (await hasCommits(cwd)) {
     await git.reset(['HEAD']);
-  } catch {
-    // Ignore errors (e.g., no commits yet)
+  } else {
+    try {
+      await git.raw(['rm', '-r', '--cached', '.']);
+    } catch {
+      // Ignore if index is already empty
+    }
   }
 }
 
