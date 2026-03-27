@@ -14,10 +14,12 @@ import { logger, colors } from '../utils/logger.js';
 export async function stageFiles(files: string[], cwd?: string): Promise<void> {
   const git = getGit(cwd);
 
-  try {
-    await git.raw(['add', '-A', '--', ...files]);
-  } catch (error) {
-    logger.warning(`Failed to stage files: ${error}`);
+  for (const file of files) {
+    try {
+      await git.raw(['add', '-A', '--', file]);
+    } catch (error) {
+      logger.warning(`Failed to stage file: ${file}`);
+    }
   }
 }
 
