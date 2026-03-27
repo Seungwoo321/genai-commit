@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.9.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.0-beta.0...v1.9.0) (2026-03-27)
+
 ## [1.9.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.8.0...v1.9.0-beta.0) (2026-03-27)
 
 ### Features
