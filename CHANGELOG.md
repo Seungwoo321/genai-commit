@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.5.0](https://github.com/Seungwoo321/genai-commit/compare/v1.4.0...v1.5.0) (2026-03-27)
+
+### Features
+
+* **git:** support renamed file tracking ([905ee8a](https://github.com/Seungwoo321/genai-commit/commit/905ee8adcaec4a555438918f7cb688d3c7283fcf))
+
+### Refactoring
+
+* **git:** simplify file staging logic ([b25c1e3](https://github.com/Seungwoo321/genai-commit/commit/b25c1e3d423d2e75dae2d2697a5bfad29872a46b))
+
+### Documentation
+
+* **prompts:** clarify rename file handling rules ([3a6f69e](https://github.com/Seungwoo321/genai-commit/commit/3a6f69e166a7385e4832e1d5990882ff9e3b555b))
+
 ## [1.4.0](https://github.com/Seungwoo321/genai-commit/compare/v1.4.0-beta.0...v1.4.0) (2026-03-08)
 
 ## [1.4.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.3.1...v1.4.0-beta.0) (2026-03-08)
