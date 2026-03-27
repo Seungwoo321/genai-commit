@@ -4,6 +4,7 @@
 
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git';
 import type { GitChange, GitStats } from '../types/git.js';
+import { logger } from '../utils/logger.js';
 
 let gitInstance: SimpleGit | null = null;
 
@@ -200,7 +201,12 @@ export async function getRemoteStatus(cwd?: string): Promise<RemoteStatus> {
 
   try {
     // Fetch latest from remote (silently)
-    await git.fetch(['--quiet']);
+    try {
+      await git.fetch(['--quiet']);
+    } catch {
+      logger.warning('Failed to fetch from remote. Skipping remote status check.');
+      return defaultStatus;
+    }
 
     // Get current branch
     const branch = await getCurrentBranch(cwd);
