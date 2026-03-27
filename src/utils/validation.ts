@@ -39,6 +39,31 @@ export function validateFilesExist(
 }
 
 /**
+ * Find changed files not included in any commit
+ * Returns the list of missing files so the caller can decide what to do
+ */
+export function findMissingFiles(
+  commits: Commit[],
+  validFiles: Set<string>
+): string[] {
+  const committedFiles = new Set<string>();
+  for (const commit of commits) {
+    for (const file of commit.files) {
+      committedFiles.add(file);
+    }
+  }
+
+  const missing: string[] = [];
+  for (const file of validFiles) {
+    if (!committedFiles.has(file)) {
+      missing.push(file);
+    }
+  }
+
+  return missing;
+}
+
+/**
  * Check if a string is a valid Conventional Commit title
  */
 export function isValidConventionalCommit(title: string): boolean {

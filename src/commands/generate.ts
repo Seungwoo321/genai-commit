@@ -20,7 +20,7 @@ import { generateFullTreeSummary } from '../git/tree.js';
 import { getDiffContent } from '../git/diff.js';
 import { runInteractiveLoop } from '../ui/interactive.js';
 import { displayAnalysisStart, displayProgress } from '../ui/display.js';
-import { validateFilesExist, validateTitleLength } from '../utils/validation.js';
+import { validateFilesExist, validateTitleLength, findMissingFiles } from '../utils/validation.js';
 import { logger } from '../utils/logger.js';
 import { DEFAULT_CONFIG } from '../config/defaults.js';
 
@@ -154,6 +154,15 @@ ${treeSummary}`;
     // Validate
     validateFilesExist(result.commits, validFiles);
     validateTitleLength(result.commits);
+
+    // Check for missing files
+    const missingFiles = findMissingFiles(result.commits, validFiles);
+    if (missingFiles.length > 0) {
+      logger.warning(`${missingFiles.length} file(s) not included in any commit:`);
+      for (const file of missingFiles) {
+        console.log(`  - ${file}`);
+      }
+    }
 
     // Run interactive loop
     await runInteractiveLoop(
