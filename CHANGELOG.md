@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.9.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.8.0...v1.9.0-beta.0) (2026-03-27)
+
+### Features
+
+* **validation:** support directory-level file matching ([c137076](https://github.com/Seungwoo321/genai-commit/commit/c137076a02dfe659eb3c02957e3112b184719647))
+
+### Bug Fixes
+
+* **git:** handle staging reset for repos without commits ([8033fb7](https://github.com/Seungwoo321/genai-commit/commit/8033fb70bd26add6fafa6d9f0985e4ec6599befc))
+
 ## [1.8.0](https://github.com/Seungwoo321/genai-commit/compare/v1.8.0-beta.0...v1.8.0) (2026-03-27)
 
 ## [1.8.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.1...v1.8.0-beta.0) (2026-03-27)
