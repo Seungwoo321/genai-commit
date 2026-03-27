@@ -7,25 +7,32 @@ import type { Commit } from '../types/commit.js';
 import { logger, colors } from '../utils/logger.js';
 
 /**
- * Get set of deleted files from current git status
+ * Check if a path is ignored by .gitignore
+ * Note: simple-git treats non-zero exit as error only when stderr is non-empty.
+ * `git check-ignore -q` suppresses stderr, so we use non-quiet mode
+ * and check if there's output (output = ignored, no output = not ignored).
  */
-async function getDeletedFiles(git: ReturnType<typeof getGit>): Promise<Set<string>> {
-  const status = await git.status();
-  return new Set(status.deleted);
+async function isIgnored(git: ReturnType<typeof getGit>, file: string): Promise<boolean> {
+  try {
+    const result = await git.raw(['check-ignore', file]);
+    return result.trim().length > 0;
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Stage files for commit
- * Uses `git rm --cached` for deleted files, `git add -A` for the rest
+ * - .gitignore'd paths (tracked but now ignored): git rm -r --cached
+ * - Everything else: git add -A
  */
 export async function stageFiles(files: string[], cwd?: string): Promise<void> {
   const git = getGit(cwd);
-  const deletedFiles = await getDeletedFiles(git);
 
   for (const file of files) {
     try {
-      if (deletedFiles.has(file)) {
-        await git.raw(['rm', '--cached', '--', file]);
+      if (await isIgnored(git, file)) {
+        await git.raw(['rm', '-r', '--cached', '--', file]);
       } else {
         await git.raw(['add', '-A', '--', file]);
       }

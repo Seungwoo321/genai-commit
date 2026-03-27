@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.8.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.1...v1.8.0-beta.0) (2026-03-27)
+
+### Features
+
+* **git:** add commit execution module ([69fd2b3](https://github.com/Seungwoo321/genai-commit/commit/69fd2b303b592c0c368dad06d1b12bbfedd2bb04))
+
+### Refactoring
+
+* **git:** improve gitignore handling in stage logic ([f17cba8](https://github.com/Seungwoo321/genai-commit/commit/f17cba846b4d9071fbb15effed476439e3d97388))
+
 ## [1.7.1](https://github.com/Seungwoo321/genai-commit/compare/v1.7.1-beta.0...v1.7.1) (2026-03-27)
 
 ## [1.7.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.0...v1.7.1-beta.0) (2026-03-27)
