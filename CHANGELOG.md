@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.6.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.5.1...v1.6.0-beta.0) (2026-03-27)
+
+### Features
+
+* **validation:** add missing file detection ([dca0f06](https://github.com/Seungwoo321/genai-commit/commit/dca0f0689e5b941c97b4c4fd600db51888347d47))
+
+### Bug Fixes
+
+* **git:** improve error logging for file staging ([6a94046](https://github.com/Seungwoo321/genai-commit/commit/6a9404634760a06bdb0d7b3d9f7b071cf0834fcf))
+
 ## [1.5.1](https://github.com/Seungwoo321/genai-commit/compare/v1.5.0...v1.5.1) (2026-03-27)
 
 ### Refactoring
