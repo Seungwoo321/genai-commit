@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.1](https://github.com/Seungwoo321/genai-commit/compare/v1.5.0...v1.5.1) (2026-03-27)
+
+### Refactoring
+
+* **git:** stage files individually for better error handling ([248afdb](https://github.com/Seungwoo321/genai-commit/commit/248afdb258b62697b78ab85a022b0f379aae2ad0))
+
 ## [1.5.0](https://github.com/Seungwoo321/genai-commit/compare/v1.4.0...v1.5.0) (2026-03-27)
 
 ### Features
