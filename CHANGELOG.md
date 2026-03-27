@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.6.0...v1.7.0-beta.0) (2026-03-27)
+
+### Features
+
+* **tree:** add progressive depth reduction for large trees ([f702554](https://github.com/Seungwoo321/genai-commit/commit/f7025548ffc737d0427724bf13fa074b22145414))
+
 ## [1.6.0](https://github.com/Seungwoo321/genai-commit/compare/v1.6.0-beta.0...v1.6.0) (2026-03-27)
 
 ## [1.6.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.5.1...v1.6.0-beta.0) (2026-03-27)
