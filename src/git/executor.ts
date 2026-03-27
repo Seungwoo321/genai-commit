@@ -7,16 +7,28 @@ import type { Commit } from '../types/commit.js';
 import { logger, colors } from '../utils/logger.js';
 
 /**
+ * Get set of deleted files from current git status
+ */
+async function getDeletedFiles(git: ReturnType<typeof getGit>): Promise<Set<string>> {
+  const status = await git.status();
+  return new Set(status.deleted);
+}
+
+/**
  * Stage files for commit
- * Uses `git add -A -- <files>` which handles all cases:
- * new, modified, deleted, and renamed files
+ * Uses `git rm --cached` for deleted files, `git add -A` for the rest
  */
 export async function stageFiles(files: string[], cwd?: string): Promise<void> {
   const git = getGit(cwd);
+  const deletedFiles = await getDeletedFiles(git);
 
   for (const file of files) {
     try {
-      await git.raw(['add', '-A', '--', file]);
+      if (deletedFiles.has(file)) {
+        await git.raw(['rm', '--cached', '--', file]);
+      } else {
+        await git.raw(['add', '-A', '--', file]);
+      }
     } catch (error) {
       logger.warning(`Failed to stage file: ${file} - ${error instanceof Error ? error.message : error}`);
     }

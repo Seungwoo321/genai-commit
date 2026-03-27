@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.0...v1.7.1-beta.0) (2026-03-27)
+
+### Bug Fixes
+
+* **git:** handle deleted files properly in staging ([95ebae1](https://github.com/Seungwoo321/genai-commit/commit/95ebae1374b8ade4e8ff4ef985101ee0f0a70fcc))
+
 ## [1.7.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.0-beta.0...v1.7.0) (2026-03-27)
 
 ## [1.7.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.6.0...v1.7.0-beta.0) (2026-03-27)
