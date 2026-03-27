@@ -18,7 +18,7 @@ export async function stageFiles(files: string[], cwd?: string): Promise<void> {
     try {
       await git.raw(['add', '-A', '--', file]);
     } catch (error) {
-      logger.warning(`Failed to stage file: ${file}`);
+      logger.warning(`Failed to stage file: ${file} - ${error instanceof Error ? error.message : error}`);
     }
   }
 }
