@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.9.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.0...v1.9.1-beta.0) (2026-03-27)
+
+### Bug Fixes
+
+* **git:** handle fetch failure gracefully in remote status check ([6120a0a](https://github.com/Seungwoo321/genai-commit/commit/6120a0a6e752a630df1aaf23ee724e370899874f))
+
 ## [1.9.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.0-beta.0...v1.9.0) (2026-03-27)
 
 ## [1.9.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.8.0...v1.9.0-beta.0) (2026-03-27)
