@@ -16,6 +16,8 @@ Rules:
 - Title under 72 characters
 - Split into multiple commits when changes are logically separate
 - Group related file changes into single commit when appropriate
+- IMPORTANT: Include ALL files in the files array, including deleted (D) and renamed (R) files
+- For renamed files (R old.ts → new.ts), include BOTH the old and new paths in the files array
 - NEVER include Jira ticket numbers (like AS-123, PROJ-456) in titles or messages
 - Jira tickets are assigned separately via the [t] option
 
@@ -65,11 +67,13 @@ MESSAGE: detailed message here
 RULES:
 1. Each commit block MUST start with ===COMMIT=== on its own line
 2. FILES: comma-separated file paths (use ONLY files from the input, NEVER invent files)
-3. TITLE: follow Conventional Commits format, under 72 characters
-4. MESSAGE: detailed description in specified language
-5. You may output multiple ===COMMIT=== blocks for separate logical changes
-6. Group related files into the same commit
-7. NEVER include Jira ticket numbers in titles or messages
+3. IMPORTANT: Include ALL files including deleted (D) and renamed (R) files in FILES
+4. For renamed files (R old.ts → new.ts), include BOTH old and new paths in FILES
+5. TITLE: follow Conventional Commits format, under 72 characters
+6. MESSAGE: detailed description in specified language
+7. You may output multiple ===COMMIT=== blocks for separate logical changes
+8. Group related files into the same commit
+9. NEVER include Jira ticket numbers in titles or messages
 
 Conventional Commit Types:
 - feat: new feature
