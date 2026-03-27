@@ -87,7 +87,7 @@ export async function getGitStatus(cwd?: string): Promise<{
   }
 
   for (const file of status.renamed) {
-    changes.push({ file: file.to, status: 'R' });
+    changes.push({ file: file.to, status: 'R', from: file.from });
     stats.renamed++;
   }
 
@@ -117,7 +117,14 @@ export async function getGitStatus(cwd?: string): Promise<{
  */
 export async function getAllChangedFiles(cwd?: string): Promise<Set<string>> {
   const { changes } = await getGitStatus(cwd);
-  return new Set(changes.map((c) => c.file));
+  const files = new Set<string>();
+  for (const c of changes) {
+    files.add(c.file);
+    if (c.from) {
+      files.add(c.from);
+    }
+  }
+  return files;
 }
 
 /**

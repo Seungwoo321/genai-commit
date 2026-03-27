@@ -7,6 +7,7 @@ export type ChangeStatus = 'A' | 'M' | 'D' | 'R' | '?';
 export interface GitChange {
   file: string;
   status: ChangeStatus;
+  from?: string; // Original path for renamed files
 }
 
 export interface GitStats {
