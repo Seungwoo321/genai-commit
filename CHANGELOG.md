@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.7.0](https://github.com/Seungwoo321/genai-commit/compare/v1.7.0-beta.0...v1.7.0) (2026-03-27)
+
 ## [1.7.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.6.0...v1.7.0-beta.0) (2026-03-27)
 
 ### Features
