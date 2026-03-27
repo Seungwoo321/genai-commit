@@ -22,11 +22,9 @@ export async function getModifiedDiffs(
   const hasExistingCommits = await hasCommits(cwd);
   const diffRef = hasExistingCommits ? ['HEAD'] : ['--cached'];
 
-  // Get list of modified files
-  const diffSummary = await git.diffSummary(diffRef);
-  const modifiedFiles = diffSummary.files
-    .filter((f) => !f.binary && 'changes' in f && (f as { changes: number }).changes > 0)
-    .map((f) => f.file);
+  // Use --name-only to get accurate file paths (handles renames correctly)
+  const nameOnly = await git.raw(['diff', '--name-only', ...diffRef]);
+  const modifiedFiles = nameOnly.trim().split('\n').filter(Boolean);
 
   if (modifiedFiles.length === 0) {
     return '';
@@ -51,7 +49,7 @@ export async function getModifiedDiffs(
         currentSize += diffSize + file.length + 10;
       }
     } catch {
-      // Skip files that can't be diffed
+      // Skip files that can't be diffed (e.g. deleted files)
     }
   }
 

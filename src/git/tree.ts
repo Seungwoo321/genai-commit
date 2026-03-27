@@ -29,7 +29,8 @@ function getExtension(file: string): string {
 export function generateTreeSummary(
   files: string[],
   changeType: ChangeStatus,
-  options: Partial<TreeSummaryOptions> = {}
+  options: Partial<TreeSummaryOptions> = {},
+  renameMap?: Map<string, string>
 ): string {
   const opts = { ...DEFAULT_OPTIONS, ...options };
 
@@ -39,7 +40,12 @@ export function generateTreeSummary(
 
   // If files are few, just list them
   if (files.length <= opts.compressionThreshold) {
-    return files.map((f) => `${changeType} ${f}`).join('\n');
+    return files.map((f) => {
+      if (changeType === 'R' && renameMap?.has(f)) {
+        return `${changeType} ${renameMap.get(f)} → ${f}`;
+      }
+      return `${changeType} ${f}`;
+    }).join('\n');
   }
 
   // Group files by directory at treeDepth level
@@ -98,7 +104,14 @@ export function generateFullTreeSummary(
   const added = changes.filter((c) => c.status === 'A').map((c) => c.file);
   const modified = changes.filter((c) => c.status === 'M').map((c) => c.file);
   const deleted = changes.filter((c) => c.status === 'D').map((c) => c.file);
-  const renamed = changes.filter((c) => c.status === 'R').map((c) => c.file);
+  const renamedChanges = changes.filter((c) => c.status === 'R');
+  const renamed = renamedChanges.map((c) => c.file);
+  const renameMap = new Map<string, string>();
+  for (const c of renamedChanges) {
+    if (c.from) {
+      renameMap.set(c.file, c.from);
+    }
+  }
   const untracked = changes.filter((c) => c.status === '?').map((c) => c.file);
 
   const total = added.length + modified.length + deleted.length + renamed.length + untracked.length;
@@ -135,7 +148,7 @@ Total: ${total} files
 
   if (renamed.length > 0) {
     output += `\n--- Renamed (${renamed.length}) ---\n`;
-    output += generateTreeSummary(renamed, 'R', opts);
+    output += generateTreeSummary(renamed, 'R', opts, renameMap);
     output += '\n';
   }
 

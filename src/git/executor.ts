@@ -5,31 +5,19 @@
 import { getGit, resetStaging } from './status.js';
 import type { Commit } from '../types/commit.js';
 import { logger, colors } from '../utils/logger.js';
-import fs from 'fs';
 
 /**
  * Stage files for commit
+ * Uses `git add -A -- <files>` which handles all cases:
+ * new, modified, deleted, and renamed files
  */
 export async function stageFiles(files: string[], cwd?: string): Promise<void> {
   const git = getGit(cwd);
 
-  for (const file of files) {
-    try {
-      // Check if file exists
-      if (fs.existsSync(file)) {
-        await git.add(file);
-      } else {
-        // File might be deleted, try to stage the deletion
-        try {
-          await git.rm(file);
-        } catch {
-          // If rm fails, try add with update flag
-          await git.add(['-A', file]);
-        }
-      }
-    } catch (error) {
-      logger.warning(`Failed to stage file: ${file}`);
-    }
+  try {
+    await git.raw(['add', '-A', '--', ...files]);
+  } catch (error) {
+    logger.warning(`Failed to stage files: ${error}`);
   }
 }
 
