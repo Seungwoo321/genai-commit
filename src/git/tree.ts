@@ -7,6 +7,7 @@ import type { GitChange, ChangeStatus } from '../types/git.js';
 export interface TreeSummaryOptions {
   treeDepth: number;
   compressionThreshold: number;
+  maxTreeSize?: number;
 }
 
 const DEFAULT_OPTIONS: TreeSummaryOptions = {
@@ -91,16 +92,13 @@ export function generateTreeSummary(
 }
 
 /**
- * Generate full tree summary from git changes
+ * Build tree sections from changes at a given treeDepth
  */
-export function generateFullTreeSummary(
+function buildTreeSections(
   branch: string,
   changes: GitChange[],
-  options: Partial<TreeSummaryOptions> = {}
+  opts: TreeSummaryOptions
 ): string {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-
-  // Group changes by status
   const added = changes.filter((c) => c.status === 'A').map((c) => c.file);
   const modified = changes.filter((c) => c.status === 'M').map((c) => c.file);
   const deleted = changes.filter((c) => c.status === 'D').map((c) => c.file);
@@ -125,7 +123,7 @@ Total: ${total} files
   - Renamed (R): ${renamed.length}
   - Untracked (?): ${untracked.length}
 
-=== FILE TREE ===
+=== FILE TREE (depth: ${opts.treeDepth}) ===
 `;
 
   if (modified.length > 0) {
@@ -156,6 +154,29 @@ Total: ${total} files
     output += `\n--- Untracked (${untracked.length}) ---\n`;
     output += generateTreeSummary(untracked, '?', opts);
     output += '\n';
+  }
+
+  return output;
+}
+
+/**
+ * Generate full tree summary from git changes
+ * Progressively reduces treeDepth if output exceeds maxTreeSize
+ */
+export function generateFullTreeSummary(
+  branch: string,
+  changes: GitChange[],
+  options: Partial<TreeSummaryOptions> = {}
+): string {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+  const maxTreeSize = opts.maxTreeSize ?? 20000;
+
+  let depth = opts.treeDepth;
+  let output = buildTreeSections(branch, changes, { ...opts, treeDepth: depth });
+
+  while (output.length > maxTreeSize && depth > 1) {
+    depth--;
+    output = buildTreeSections(branch, changes, { ...opts, treeDepth: depth });
   }
 
   return output;
