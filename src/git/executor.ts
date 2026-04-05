@@ -14,7 +14,7 @@ import { logger, colors } from '../utils/logger.js';
  */
 async function isIgnored(git: ReturnType<typeof getGit>, file: string): Promise<boolean> {
   try {
-    const result = await git.raw(['check-ignore', file]);
+    const result = await git.raw(['check-ignore', '--no-index', file]);
     return result.trim().length > 0;
   } catch {
     return false;
