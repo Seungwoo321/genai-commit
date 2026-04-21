@@ -18,6 +18,8 @@ Rules:
 - Group related file changes into single commit when appropriate
 - IMPORTANT: Include ALL files in the files array, including deleted (D) and renamed (R) files
 - For renamed files (R old.ts → new.ts), include BOTH the old and new paths in the files array
+- CRITICAL: Every file path in "files" MUST be copied VERBATIM from the FILE LIST section of the input. Do NOT invent, abbreviate, summarize, or group paths. Do NOT emit synthetic labels such as "dir/ [N files: N *.ext]" — those are input-side summaries, not valid paths.
+- Every listed file in the input MUST appear in exactly one commit's files array. Missing files will cause the commit to be rejected.
 - NEVER include Jira ticket numbers (like AS-123, PROJ-456) in titles or messages
 - Jira tickets are assigned separately via the [t] option
 
@@ -66,14 +68,16 @@ MESSAGE: detailed message here
 
 RULES:
 1. Each commit block MUST start with ===COMMIT=== on its own line
-2. FILES: comma-separated file paths (use ONLY files from the input, NEVER invent files)
-3. IMPORTANT: Include ALL files including deleted (D) and renamed (R) files in FILES
-4. For renamed files (R old.ts → new.ts), include BOTH old and new paths in FILES
-5. TITLE: follow Conventional Commits format, under 72 characters
-6. MESSAGE: detailed description in specified language
-7. You may output multiple ===COMMIT=== blocks for separate logical changes
-8. Group related files into the same commit
-9. NEVER include Jira ticket numbers in titles or messages
+2. FILES: comma-separated file paths copied VERBATIM from the FILE LIST section of the input
+3. NEVER invent, abbreviate, summarize, or group paths. NEVER emit synthetic labels such as "dir/ [N files: N *.ext]" — those are input summaries, not valid paths
+4. IMPORTANT: Include ALL files including deleted (D) and renamed (R) files in FILES
+5. For renamed files (R old.ts → new.ts), include BOTH old and new paths in FILES
+6. Every file listed in the input MUST appear in exactly one commit's FILES list; missing files will cause the commit to be rejected
+7. TITLE: follow Conventional Commits format, under 72 characters
+8. MESSAGE: detailed description in specified language
+9. You may output multiple ===COMMIT=== blocks for separate logical changes
+10. Group related files into the same commit
+11. NEVER include Jira ticket numbers in titles or messages
 
 Conventional Commit Types:
 - feat: new feature

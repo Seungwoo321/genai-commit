@@ -31,5 +31,4 @@ export interface GitDiffResult {
 export interface DiffOptions {
   maxInputSize: number;
   maxDiffSize: number;
-  treeDepth: number;
 }
