@@ -8,7 +8,6 @@ export const DEFAULT_CONFIG: GencoConfig = {
   maxInputSize: 30000,
   maxDiffSize: 15000,
   timeout: 120000, // 120 seconds
-  treeDepth: 3,
   maxRetries: 2,
   titleLang: 'en',
   messageLang: 'ko',
