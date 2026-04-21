@@ -7,24 +7,35 @@ import type { GitChange, GitStats } from '../types/git.js';
 import { logger } from '../utils/logger.js';
 
 let gitInstance: SimpleGit | null = null;
+let gitRoot: string | null = null;
 
 /**
- * Get or create simple-git instance
+ * Get or create simple-git instance.
+ * After `isGitRepository()` succeeds, the instance is anchored at the
+ * repository root so pathspecs relative to git root resolve correctly
+ * even when the CLI is run from a subdirectory.
  */
 export function getGit(cwd?: string): SimpleGit {
-  if (!gitInstance || cwd) {
-    gitInstance = simpleGit(cwd);
+  if (cwd) {
+    return simpleGit(cwd);
+  }
+  if (!gitInstance) {
+    gitInstance = simpleGit(gitRoot ?? undefined);
   }
   return gitInstance;
 }
 
 /**
- * Check if current directory is a git repository
+ * Check if current directory is a git repository.
+ * On success, caches the repository top-level path so that all subsequent
+ * git operations run with git root as their working directory.
  */
 export async function isGitRepository(cwd?: string): Promise<boolean> {
   try {
-    const git = getGit(cwd);
-    await git.revparse(['--is-inside-work-tree']);
+    const probe = simpleGit(cwd);
+    const root = await probe.revparse(['--show-toplevel']);
+    gitRoot = root.trim();
+    gitInstance = simpleGit(gitRoot);
     return true;
   } catch {
     return false;

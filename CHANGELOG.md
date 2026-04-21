@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.10.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.1...v1.10.0-beta.0) (2026-04-21)
+
+### Features
+
+* **git:** improve staging error handling and subdirectory support ([796a6ab](https://github.com/Seungwoo321/genai-commit/commit/796a6ab40bce0c2e2aa4c1ebc4f2fe21812ab345))
+
+### Bug Fixes
+
+* **git:** add --no-index flag to check-ignore command ([df13815](https://github.com/Seungwoo321/genai-commit/commit/df13815dee0801251d280bb674a0c462c72a7e0e))
+
 ## [1.9.1](https://github.com/Seungwoo321/genai-commit/compare/v1.9.1-beta.0...v1.9.1) (2026-03-27)
 
 ## [1.9.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.0...v1.9.1-beta.0) (2026-03-27)
