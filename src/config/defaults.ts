@@ -16,7 +16,7 @@ export const DEFAULT_CONFIG: GencoConfig = {
 
 export const CURSOR_DEFAULT_MODEL = 'claude-4.5-sonnet';
 export const CLAUDE_DEFAULT_MODEL = 'haiku';
-export const CODEX_DEFAULT_MODEL = 'gpt-5-codex';
+export const CODEX_DEFAULT_MODEL = 'gpt-5';
 
 // Supported models per provider
 export const CURSOR_MODELS = [
@@ -37,8 +37,8 @@ export const CLAUDE_MODELS = [
 ];
 
 export const CODEX_MODELS = [
-  { name: 'gpt-5-codex', description: 'GPT-5 Codex (default)' },
-  { name: 'gpt-5', description: 'GPT-5' },
+  { name: 'gpt-5', description: 'GPT-5 (default)' },
+  { name: 'gpt-5-codex', description: 'GPT-5 Codex (API key auth only)' },
   { name: 'o3', description: 'OpenAI o3' },
   { name: 'o4-mini', description: 'OpenAI o4-mini' },
 ];
