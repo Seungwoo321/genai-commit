@@ -2,7 +2,7 @@
  * Embedded prompt templates for AI providers
  */
 
-export type ProviderPromptType = 'claude' | 'cursor';
+export type ProviderPromptType = 'claude' | 'cursor' | 'codex';
 export type PromptCategory = 'commit' | 'regroup';
 
 // Claude Code prompts (JSON output)
@@ -163,6 +163,7 @@ export function getPromptTemplate(
   if (provider === 'claude') {
     return category === 'commit' ? CLAUDE_COMMIT_PROMPT : CLAUDE_REGROUP_PROMPT;
   } else {
+    // Cursor and Codex share the delimiter-format prompt
     return category === 'commit' ? CURSOR_COMMIT_PROMPT : CURSOR_REGROUP_PROMPT;
   }
 }
