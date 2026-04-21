@@ -4,6 +4,7 @@
 
 import chalk from 'chalk';
 import type { Commit } from '../types/commit.js';
+import { logger } from '../utils/logger.js';
 
 /**
  * Display proposed commits in a formatted way
@@ -30,19 +31,6 @@ export function displayProgress(step: number, total: number, message: string): v
 }
 
 /**
- * Display input size information
- */
-export function displayInputSize(treeSize: number, diffSize: number, totalSize: number): void {
-  console.log(chalk.dim(`  Tree summary: ${treeSize} bytes`));
-  if (diffSize > 0) {
-    console.log(chalk.dim(`  Diff content: ${diffSize} bytes`));
-  } else {
-    console.log(chalk.dim(`  Diff content: skipped (tree too large)`));
-  }
-  console.log(chalk.green(`Total input size: ${totalSize} bytes`));
-}
-
-/**
  * Display analysis start message
  */
 export function displayAnalysisStart(branch: string, model?: string): void {
@@ -50,4 +38,44 @@ export function displayAnalysisStart(branch: string, model?: string): void {
   if (model) {
     console.log(chalk.cyan(`Using model: ${model}`));
   }
+}
+
+function printList(files: string[]): void {
+  for (const file of files) {
+    console.log(`  - ${file}`);
+  }
+}
+
+/**
+ * Report file entries that did not resolve to any real changed file.
+ */
+export function reportDropped(dropped: string[]): void {
+  if (dropped.length === 0) return;
+  logger.warning(
+    `${dropped.length} invalid file entry(ies) dropped from AI output:`
+  );
+  printList(dropped);
+}
+
+/**
+ * Report files that appeared in more than one commit (first-commit-wins).
+ */
+export function reportDuplicates(duplicates: string[]): void {
+  if (duplicates.length === 0) return;
+  logger.warning(
+    `${duplicates.length} file(s) appeared in multiple commits; kept in the first:`
+  );
+  printList(duplicates);
+}
+
+/**
+ * Report changed files that no commit claimed ownership of. Always produces
+ * an error-level message because the commit flow must be blocked.
+ */
+export function reportMissing(missing: string[]): void {
+  if (missing.length === 0) return;
+  logger.error(
+    `${missing.length} changed file(s) not assigned to any commit:`
+  );
+  printList(missing);
 }
