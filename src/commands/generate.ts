@@ -3,10 +3,11 @@
  */
 
 import ora from 'ora';
-import type { ProviderType, ProviderOptions } from '../providers/types.js';
+import type { ProviderOptions } from '../providers/types.js';
+import { PROVIDER_CHOICES } from '../providers/types.js';
 import type { GencoConfig } from '../config/types.js';
 import type { Language } from '../types/commit.js';
-import { createProvider, isValidProviderType } from '../providers/index.js';
+import { createProvider, normalizeProviderType } from '../providers/index.js';
 import {
   isGitRepository,
   getCurrentBranch,
@@ -38,14 +39,13 @@ export async function generateCommand(
   provider: string,
   options: GenerateOptions
 ): Promise<void> {
-  // Validate provider
-  if (!isValidProviderType(provider)) {
+  // Validate and normalize provider (accepts short aliases)
+  const providerType = normalizeProviderType(provider);
+  if (!providerType) {
     logger.error(`Unknown provider: ${provider}`);
-    console.log('Available providers: claude-code, cursor-cli');
+    console.log(`Available providers: ${PROVIDER_CHOICES}`);
     process.exit(1);
   }
-
-  const providerType = provider as ProviderType;
 
   // Check if in git repository
   if (!(await isGitRepository())) {

@@ -13,16 +13,16 @@ const program = new Command();
 
 program
   .name('genai-commit')
-  .description('AI-powered commit message generator using Claude Code or Cursor CLI')
+  .description('AI-powered commit message generator using Claude Code, Cursor CLI, or Codex CLI')
   .version('1.0.0');
 
 // Main generation command: genai-commit <provider>
 program
-  .argument('<provider>', 'AI provider (claude-code or cursor-cli)')
+  .argument('<provider>', 'AI provider: claude-code|claude, cursor-cli|cursor, codex-cli|codex')
   .option('--lang <lang>', 'Set both title and message language (en|ko)')
   .option('--title-lang <lang>', 'Language for commit title (en|ko)', 'en')
   .option('--message-lang <lang>', 'Language for commit message (en|ko)', 'ko')
-  .option('--model <model>', 'Model to use (cursor-cli: gemini-3-flash, sonnet-4.5, etc.)')
+  .option('--model <model>', 'Model to use (varies by provider; see: genai-commit models <provider>)')
   .action(generateCommand);
 
 // Login command: genai-commit login <provider>
@@ -47,16 +47,21 @@ program
 program.addHelpText(
   'after',
   `
-Examples:
-  $ genai-commit claude-code              # Generate with Claude Code
-  $ genai-commit cursor-cli               # Generate with Cursor CLI
-  $ genai-commit cursor-cli --model claude-4.5-sonnet
-  $ genai-commit claude-code --lang ko    # Korean title and message
+Providers (canonical | short alias):
+  claude-code | claude     Anthropic Claude Code CLI
+  cursor-cli  | cursor     Cursor Agent CLI
+  codex-cli   | codex      OpenAI Codex CLI
 
-  $ genai-commit login cursor-cli         # Login to Cursor Agent
-  $ genai-commit login claude-code        # Setup Claude token
-  $ genai-commit status claude-code       # Check Claude status
-  $ genai-commit models cursor-cli        # List supported models
+Examples:
+  $ genai-commit claude                   # Generate with Claude Code (short alias)
+  $ genai-commit cursor                   # Generate with Cursor CLI
+  $ genai-commit codex                    # Generate with Codex CLI
+  $ genai-commit claude-code --lang ko    # Canonical name, Korean title and message
+  $ genai-commit cursor --model gpt-4o    # Override model
+
+  $ genai-commit login codex              # Login to Codex CLI
+  $ genai-commit status claude            # Check Claude Code status
+  $ genai-commit models cursor            # List supported models for Cursor
 
 Interactive options:
   [y] Commit all proposed commits
