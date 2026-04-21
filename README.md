@@ -107,7 +107,7 @@ genai-commit codex
 # With specific model
 genai-commit cursor --model claude-4.5-sonnet
 genai-commit claude --model sonnet
-genai-commit codex --model gpt-5
+genai-commit codex --model gpt-5.4
 
 # Set language for both title and message
 genai-commit claude --lang ko
@@ -156,7 +156,7 @@ After generating commit messages, you'll see an interactive menu:
 | `--lang <lang>` | Set both title and message language (en\|ko) | - |
 | `--title-lang <lang>` | Language for commit title | `en` |
 | `--message-lang <lang>` | Language for commit message | `ko` |
-| `--model <model>` | Model to use | `haiku` (Claude) / `claude-4.5-sonnet` (Cursor) / `gpt-5` (Codex) |
+| `--model <model>` | Model to use | `haiku` (Claude) / `claude-4.5-sonnet` (Cursor) / `gpt-5.4` (Codex) |
 
 ## Examples
 
