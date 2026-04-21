@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.11.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.10.0...v1.11.0-beta.0) (2026-04-21)
+
+### Features
+
+* **cli:** add provider alias support and improve command handling ([2cc6a11](https://github.com/Seungwoo321/genai-commit/commit/2cc6a11fe07aaf3533a4dca5e23832c1d3a3cb63))
+* **config:** add Codex provider configuration ([ac206e6](https://github.com/Seungwoo321/genai-commit/commit/ac206e608f94c2f792c65c359e4f4ac4650b5291))
+* **provider:** add Codex CLI provider support ([35e088f](https://github.com/Seungwoo321/genai-commit/commit/35e088f39aafda651e6959e438e627f3c2433cbc))
+
+### Refactoring
+
+* **core:** update exports for new provider support ([6d69fb7](https://github.com/Seungwoo321/genai-commit/commit/6d69fb738eab4b3fb990ab6933f01bc37ca9c521))
+* **ui:** improve interactive menu text clarity ([3fb5d18](https://github.com/Seungwoo321/genai-commit/commit/3fb5d188b5d6bbe13d2b3463f2a53f01800acaef))
+
+### Documentation
+
+* **prompts:** update commit generation rules and examples ([3abc2a3](https://github.com/Seungwoo321/genai-commit/commit/3abc2a3d582bcf15fc0ba044297a5de45615a01a))
+* **readme:** add Codex CLI support and improve documentation ([807a153](https://github.com/Seungwoo321/genai-commit/commit/807a153116a4cdd9a51a21888c88e6a6ac172eb4))
+
 ## [1.10.0](https://github.com/Seungwoo321/genai-commit/compare/v1.10.0-beta.0...v1.10.0) (2026-04-21)
 
 ## [1.10.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.9.1...v1.10.0-beta.0) (2026-04-21)

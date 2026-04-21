@@ -19,4 +19,4 @@ export interface ProviderOptions {
   timeout?: number;
 }
 
-export type ProviderType = 'claude-code' | 'cursor-cli';
+export type ProviderType = 'claude-code' | 'cursor-cli' | 'codex-cli';

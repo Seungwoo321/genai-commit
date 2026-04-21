@@ -85,7 +85,7 @@ export async function runInteractiveLoop(
   config: GencoConfig
 ): Promise<void> {
   let commits = initialCommits;
-  let lastResponse = initialResponse;
+  const lastResponse = initialResponse;
 
   while (true) {
     displayCommits(commits);
@@ -100,18 +100,19 @@ export async function runInteractiveLoop(
     const action = await promptAction();
 
     switch (action) {
-      case 'commit':
+      case 'commit': {
         const success = await executeCommits(commits);
         if (success) {
           return;
         }
         break;
+      }
 
       case 'cancel':
         logger.warning('Cancelled');
         return;
 
-      case 'feedback':
+      case 'feedback': {
         const feedback = await promptFeedback();
 
         if (!feedback.trim()) {
@@ -134,6 +135,7 @@ export async function runInteractiveLoop(
           logger.error(String(error));
         }
         break;
+      }
 
       case 'jira':
         try {

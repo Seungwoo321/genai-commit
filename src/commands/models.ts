@@ -2,27 +2,52 @@
  * Models command - list supported models per provider
  */
 
-import type { ProviderType } from '../providers/types.js';
-import { isValidProviderType } from '../providers/index.js';
-import { CURSOR_MODELS, CLAUDE_MODELS } from '../config/defaults.js';
+import { PROVIDER_CHOICES } from '../providers/types.js';
+import { normalizeProviderType } from '../providers/index.js';
+import {
+  CURSOR_MODELS,
+  CLAUDE_MODELS,
+  CODEX_MODELS,
+  CURSOR_DEFAULT_MODEL,
+  CLAUDE_DEFAULT_MODEL,
+  CODEX_DEFAULT_MODEL,
+} from '../config/defaults.js';
 import { logger } from '../utils/logger.js';
 
 /**
  * Models command handler
  */
 export function modelsCommand(provider: string): void {
-  // Validate provider
-  if (!isValidProviderType(provider)) {
+  const providerType = normalizeProviderType(provider);
+  if (!providerType) {
     logger.error(`Unknown provider: ${provider}`);
-    console.log('Available providers: claude-code, cursor-cli');
+    console.log(`Available providers: ${PROVIDER_CHOICES}`);
     process.exit(1);
   }
 
-  const providerType = provider as ProviderType;
-  const models = providerType === 'cursor-cli' ? CURSOR_MODELS : CLAUDE_MODELS;
-  const defaultModel = providerType === 'cursor-cli' ? 'claude-4.5-sonnet' : 'haiku';
+  let models;
+  let defaultModel;
+  let helpHint;
 
-  console.log(`\nSupported models for ${provider}:\n`);
+  switch (providerType) {
+    case 'cursor-cli':
+      models = CURSOR_MODELS;
+      defaultModel = CURSOR_DEFAULT_MODEL;
+      helpHint = 'agent --help';
+      break;
+    case 'claude-code':
+      models = CLAUDE_MODELS;
+      defaultModel = CLAUDE_DEFAULT_MODEL;
+      helpHint = 'claude --help';
+      break;
+    case 'codex-cli':
+      models = CODEX_MODELS;
+      defaultModel = CODEX_DEFAULT_MODEL;
+      helpHint = 'codex --help';
+      break;
+  }
+
+  console.log(`\nSupported models for ${providerType}:\n`);
 
   for (const model of models) {
     const isDefault = model.name === defaultModel;
@@ -31,12 +56,7 @@ export function modelsCommand(provider: string): void {
   }
 
   console.log('\n* = default model');
-  console.log(`\nUsage: genai-commit ${provider} --model <model-name>`);
-
-  if (providerType === 'cursor-cli') {
-    console.log('\nFor the latest supported models, run: agent --help');
-  } else {
-    console.log('\nFor the latest supported models, run: claude --help');
-  }
+  console.log(`\nUsage: genai-commit ${providerType} --model <model-name>`);
+  console.log(`\nFor the latest supported models, run: ${helpHint}`);
   console.log('');
 }

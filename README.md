@@ -1,6 +1,6 @@
 # genai-commit
 
-AI-powered commit message generator using Claude Code or Cursor CLI.
+AI-powered commit message generator using Claude Code, Cursor CLI, or Codex CLI.
 
 [![npm version](https://badge.fury.io/js/genai-commit.svg)](https://www.npmjs.com/package/genai-commit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -8,18 +8,37 @@ AI-powered commit message generator using Claude Code or Cursor CLI.
 
 ## Features
 
-- **AI-powered commit messages** - Generate meaningful commit messages using Claude Code or Cursor CLI
+- **AI-powered commit messages** - Generate meaningful commit messages using Claude Code, Cursor CLI, or Codex CLI
 - **Conventional Commits** - Automatically follows the Conventional Commits specification
 - **Multi-language support** - Generate titles and messages in English or Korean
 - **Jira integration** - Assign Jira tickets to commits and auto-merge related changes
 - **Interactive workflow** - Review, provide feedback, and refine before committing
 - **Smart file grouping** - Intelligently splits changes into logical commits
+- **Automatic staging** - Stages all changes (including untracked, renamed, and deleted files) before diff analysis
+- **Works with empty repositories** - Generates commits even without prior commit history
+- **Remote sync protection** - Aborts early if the branch is behind or diverged from remote
+- **Gitignore-aware** - Respects `.gitignore` and works correctly from subdirectories
+
+## Supported File Changes
+
+| Change Type | Supported |
+|-------------|-----------|
+| Added files | Yes |
+| Modified files | Yes |
+| Deleted files | Yes |
+| Renamed files | Yes |
+| Untracked files | Yes (auto-staged) |
+| Files in subdirectories | Yes |
+| Empty repositories (no commits yet) | Yes |
 
 ## How It Works
 
 ```mermaid
 flowchart TD
-    A[Start: genai-commit] --> B[Collect Git Changes]
+    A[Start: genai-commit] --> A1{Remote Status}
+    A1 -->|behind/diverged| A2[Exit: pull required]
+    A1 -->|ok| A3[Stage All Changes]
+    A3 --> B[Collect Git Changes]
     B --> C{Changes Found?}
     C -->|No| D[Exit: No changes]
     C -->|Yes| E[Generate Tree Summary]
@@ -46,8 +65,19 @@ flowchart TD
 
 You need at least one of these AI CLI tools installed:
 
-- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) - Anthropic's official CLI
+- [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) - Anthropic's official CLI (command: `claude`)
 - [Cursor Agent CLI](https://www.cursor.com/) - Cursor's agent CLI (command: `agent`)
+- [OpenAI Codex CLI](https://github.com/openai/codex) - OpenAI's Codex CLI (command: `codex`)
+
+## Providers
+
+Each provider can be referenced by its canonical name or short alias:
+
+| Canonical | Short Alias | Underlying CLI |
+|-----------|-------------|----------------|
+| `claude-code` | `claude` | `claude` |
+| `cursor-cli` | `cursor` | `agent` |
+| `codex-cli` | `codex` | `codex` |
 
 ## Installation
 
@@ -56,7 +86,7 @@ You need at least one of these AI CLI tools installed:
 npm install -g genai-commit
 
 # Or use directly with npx (no installation required)
-npx genai-commit claude-code
+npx genai-commit claude
 ```
 
 ## Usage
@@ -64,45 +94,48 @@ npx genai-commit claude-code
 ### Generate Commit Messages
 
 ```bash
-# Using Claude Code
+# Canonical names
 genai-commit claude-code
-
-# Using Cursor Agent
 genai-commit cursor-cli
+genai-commit codex-cli
+
+# Short aliases (equivalent)
+genai-commit claude
+genai-commit cursor
+genai-commit codex
 
 # With specific model
-genai-commit cursor-cli --model claude-4.5-sonnet
-genai-commit claude-code --model sonnet
+genai-commit cursor --model claude-4.5-sonnet
+genai-commit claude --model sonnet
+genai-commit codex --model gpt-5-codex
 
 # Set language for both title and message
-genai-commit claude-code --lang ko
+genai-commit claude --lang ko
 
 # Set languages separately
-genai-commit claude-code --title-lang en --message-lang ko
+genai-commit claude --title-lang en --message-lang ko
 ```
 
 ### Authentication
 
 ```bash
-# Login to Cursor Agent
-genai-commit login cursor-cli
-
-# Setup Claude token
-genai-commit login claude-code
+# Login
+genai-commit login cursor
+genai-commit login claude
+genai-commit login codex
 
 # Check status
-genai-commit status claude-code
-genai-commit status cursor-cli
+genai-commit status claude
+genai-commit status cursor
+genai-commit status codex
 ```
 
 ### List Supported Models
 
 ```bash
-# List models for Cursor Agent
-genai-commit models cursor-cli
-
-# List models for Claude Code
-genai-commit models claude-code
+genai-commit models cursor
+genai-commit models claude
+genai-commit models codex
 ```
 
 ### Interactive Options
@@ -123,7 +156,7 @@ After generating commit messages, you'll see an interactive menu:
 | `--lang <lang>` | Set both title and message language (en\|ko) | - |
 | `--title-lang <lang>` | Language for commit title | `en` |
 | `--message-lang <lang>` | Language for commit message | `ko` |
-| `--model <model>` | Model to use | `claude-4.5-sonnet` (Cursor) / `haiku` (Claude) |
+| `--model <model>` | Model to use | `haiku` (Claude) / `claude-4.5-sonnet` (Cursor) / `gpt-5-codex` (Codex) |
 
 ## Examples
 
@@ -137,12 +170,12 @@ cd my-project
 echo "console.log('hello');" >> src/index.js
 
 # Generate and create commits
-genai-commit claude-code
+genai-commit claude
 ```
 
 ### With Jira Integration
 
-1. Run `genai-commit claude-code`
+1. Run `genai-commit claude`
 2. Review proposed commits
 3. Press `t` to assign Jira tickets
 4. Enter Jira URLs for each commit
@@ -151,7 +184,7 @@ genai-commit claude-code
 
 ### Providing Feedback
 
-1. Run `genai-commit cursor-cli`
+1. Run `genai-commit cursor`
 2. Review proposed commits
 3. Press `f` to provide feedback
 4. Enter your feedback (e.g., "Split the auth changes into separate commits")
@@ -190,7 +223,7 @@ The tool uses sensible defaults but can be configured:
 
 - Node.js >= 18.0.0
 - Git repository
-- Claude Code CLI or Cursor CLI installed and authenticated
+- Claude Code CLI, Cursor CLI, or Codex CLI installed and authenticated
 
 ## License
 
