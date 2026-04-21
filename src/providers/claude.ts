@@ -53,7 +53,7 @@ export class ClaudeCodeProvider implements AIProvider {
         raw: JSON.stringify(parsed.structured_output),
         sessionId: this.sessionId,
       };
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to parse Claude response: ${result.stdout}`);
     }
   }
