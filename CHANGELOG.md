@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.12.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.0-beta.0...v1.12.0) (2026-04-22)
+
 ## [1.12.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.11.2...v1.12.0-beta.0) (2026-04-21)
 
 ### Features
