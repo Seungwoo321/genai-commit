@@ -8,7 +8,6 @@ import type { DiffOptions } from '../types/git.js';
 const DEFAULT_OPTIONS: DiffOptions = {
   maxInputSize: 30000,
   maxDiffSize: 15000,
-  treeDepth: 3,
 };
 
 /**

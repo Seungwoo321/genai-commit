@@ -8,7 +8,6 @@ export interface GencoConfig {
   maxInputSize: number;
   maxDiffSize: number;
   timeout: number;
-  treeDepth: number;
   maxRetries: number;
   titleLang: Language;
   messageLang: Language;

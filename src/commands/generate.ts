@@ -20,8 +20,14 @@ import {
 import { generateFullTreeSummary } from '../git/tree.js';
 import { getDiffContent } from '../git/diff.js';
 import { runInteractiveLoop } from '../ui/interactive.js';
-import { displayAnalysisStart, displayProgress } from '../ui/display.js';
-import { validateFilesExist, validateTitleLength, findMissingFiles } from '../utils/validation.js';
+import {
+  displayAnalysisStart,
+  displayProgress,
+  reportDropped,
+  reportDuplicates,
+  reportMissing,
+} from '../ui/display.js';
+import { normalizeCommits, validateTitleLength } from '../utils/validation.js';
 import { logger } from '../utils/logger.js';
 import { DEFAULT_CONFIG } from '../config/defaults.js';
 
@@ -30,6 +36,7 @@ export interface GenerateOptions {
   titleLang?: Language;
   messageLang?: Language;
   model?: string;
+  timeout?: string | number;
 }
 
 /**
@@ -76,9 +83,23 @@ export async function generateCommand(
   // Stage all changes for consistent diff analysis
   await stageAllChanges();
 
+  // Resolve timeout override (--timeout is in seconds; internal unit is ms)
+  let timeoutMs = DEFAULT_CONFIG.timeout;
+  if (options.timeout !== undefined) {
+    const raw = typeof options.timeout === 'number'
+      ? options.timeout
+      : Number(options.timeout);
+    if (!Number.isFinite(raw) || raw <= 0) {
+      logger.error(`Invalid --timeout value: ${options.timeout}`);
+      process.exit(1);
+    }
+    timeoutMs = Math.round(raw * 1000);
+  }
+
   // Build config
   const config: GencoConfig = {
     ...DEFAULT_CONFIG,
+    timeout: timeoutMs,
     titleLang: options.lang ?? options.titleLang ?? DEFAULT_CONFIG.titleLang,
     messageLang: options.lang ?? options.messageLang ?? DEFAULT_CONFIG.messageLang,
   };
@@ -94,16 +115,20 @@ export async function generateCommand(
 
   // Get branch and changes
   const branch = await getCurrentBranch();
-  const { changes, stats } = await getGitStatus();
+  const { changes } = await getGitStatus();
   const validFiles = await getAllChangedFiles();
 
   displayAnalysisStart(branch, options.model);
 
+  // Tree summary is capped relative to the input budget so a custom
+  // `maxInputSize` shrinks the tree cap accordingly. Reserve headroom for
+  // the header and at least a minimal diff; if the resulting cap is
+  // non-positive the tree will still emit the CHANGE SUMMARY header.
+  const treeBudget = Math.max(2000, config.maxInputSize - config.maxDiffSize - 500);
+
   // Generate tree summary
   displayProgress(1, 2, 'Generating file tree summary...');
-  const treeSummary = generateFullTreeSummary(branch, changes, {
-    treeDepth: config.treeDepth,
-  });
+  const treeSummary = generateFullTreeSummary(branch, changes, { maxTreeSize: treeBudget });
   const treeSize = treeSummary.length;
   console.log(`  Tree summary: ${treeSize} bytes`);
 
@@ -117,29 +142,20 @@ export async function generateCommand(
 
   if (diffSize > 0) {
     console.log(`  Diff content: ${diffSize} bytes`);
+  } else if (treeSize > config.maxInputSize - 1500) {
+    console.log(`  Diff content: skipped (tree consumed input budget)`);
   } else {
-    console.log(`  Diff content: skipped (tree too large)`);
+    console.log(`  Diff content: none (no tracked file diffs)`);
   }
 
   // Build input
-  let input = `TITLE_LANG: ${config.titleLang}
+  const input = `TITLE_LANG: ${config.titleLang}
 MESSAGE_LANG: ${config.messageLang}
 
-${treeSummary}`;
-
-  if (diffContent) {
-    input += diffContent;
-  }
+${treeSummary}${diffContent}`;
 
   const inputSize = input.length;
   logger.success(`Total input size: ${inputSize} bytes`);
-
-  // Truncate if needed
-  if (inputSize > config.maxInputSize) {
-    logger.warning('Warning: Input size exceeds limit. Truncating...');
-    input = input.substring(0, config.maxInputSize) +
-      `\n\n[INPUT TRUNCATED - Original size: ${inputSize} bytes]`;
-  }
 
   // Call AI provider
   const spinner = ora('Calling AI agent...').start();
@@ -151,34 +167,39 @@ ${treeSummary}`;
     // Parse response
     const result = aiProvider.parseResponse(response);
 
-    // Validate
-    validateFilesExist(result.commits, validFiles);
-    validateTitleLength(result.commits);
+    // Normalize against the real change list: resolve directory-level entries
+    // to actual files, drop anything that does not match a changed file, dedup
+    // cross-commit duplicates, and compute coverage gaps. Without this,
+    // synthetic paths reach `git add` and duplicated files hit an empty index
+    // on their second commit.
+    const { commits: normalizedCommits, dropped, duplicates, missing } = normalizeCommits(
+      result.commits,
+      validFiles
+    );
 
-    // Check for missing files
-    const missingFiles = findMissingFiles(result.commits, validFiles);
-    if (missingFiles.length > 0) {
-      logger.warning(`${missingFiles.length} file(s) not included in any commit:`);
-      for (const file of missingFiles) {
-        console.log(`  - ${file}`);
-      }
+    validateTitleLength(normalizedCommits);
+
+    reportDropped(dropped);
+    reportDuplicates(duplicates);
+    reportMissing(missing);
+    if (missing.length > 0) {
+      logger.error(
+        'Refusing to commit with incomplete coverage. ' +
+        'Use [f] Feedback to ask the AI to include every listed file, ' +
+        'or re-run with a larger --timeout and/or --model.'
+      );
     }
 
     // Run interactive loop
-    await runInteractiveLoop(
-      aiProvider,
-      result.commits,
-      response.raw,
-      {
-        branch,
-        changes,
-        stats,
-        treeSummary,
-        diffContent,
-        validFiles,
-      },
-      config
-    );
+    await runInteractiveLoop({
+      provider: aiProvider,
+      initialCommits: normalizedCommits,
+      initialResponse: response.raw,
+      validFiles,
+      originalInput: input,
+      initialCoverage: { missing },
+      config,
+    });
   } catch (error) {
     spinner.fail('Failed to generate commits');
     logger.error(String(error));

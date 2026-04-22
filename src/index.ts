@@ -57,6 +57,6 @@ export { logger, colors } from './utils/logger.js';
 export { execCommand, execSimple } from './utils/exec.js';
 export {
   validateTitleLength,
-  validateFilesExist,
+  normalizeCommits,
   isValidConventionalCommit,
 } from './utils/validation.js';

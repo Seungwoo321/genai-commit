@@ -23,6 +23,7 @@ program
   .option('--title-lang <lang>', 'Language for commit title (en|ko)', 'en')
   .option('--message-lang <lang>', 'Language for commit message (en|ko)', 'ko')
   .option('--model <model>', 'Model to use (varies by provider; see: genai-commit models <provider>)')
+  .option('--timeout <seconds>', 'AI provider timeout in seconds (default: 120)')
   .action(generateCommand);
 
 // Login command: genai-commit login <provider>

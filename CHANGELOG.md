@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.12.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.11.2...v1.12.0-beta.0) (2026-04-21)
+
+### Features
+
+* **config:** add configurable timeout option ([3a99336](https://github.com/Seungwoo321/genai-commit/commit/3a9933612b998ae5ef05a9d723b2a1ab38ef1b93))
+* **validation:** add commit normalization and coverage validation ([9808c76](https://github.com/Seungwoo321/genai-commit/commit/9808c76fbc66e633e3939c9777eb667d042306a6))
+
+### Refactoring
+
+* **git:** improve tree summary generation with budget control ([a94ef1c](https://github.com/Seungwoo321/genai-commit/commit/a94ef1cf277b61de8e9ad3ec9951ba910337f45f))
+* **ui:** enhance interactive loop with coverage reporting ([7281050](https://github.com/Seungwoo321/genai-commit/commit/72810504fb85cec2e55d23043d810edf8b42d695))
+
 ## [1.11.2](https://github.com/Seungwoo321/genai-commit/compare/v1.11.2-beta.0...v1.11.2) (2026-04-21)
 
 ## [1.11.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.11.1...v1.11.2-beta.0) (2026-04-21)
