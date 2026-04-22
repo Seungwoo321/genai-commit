@@ -6,6 +6,8 @@ AI-powered commit message generator using Claude Code, Cursor CLI, or Codex CLI.
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/Seungwoo321/genai-commit?style=social)](https://github.com/Seungwoo321/genai-commit)
 
+> Read in other languages: [한국어](./README.ko.md)
+
 ## Features
 
 - **AI-powered commit messages** - Generate meaningful commit messages using Claude Code, Cursor CLI, or Codex CLI
