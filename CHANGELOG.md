@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.0...v1.12.1-beta.0) (2026-04-22)
+
+### Documentation
+
+* add Korean README and language selector ([c48a5e2](https://github.com/Seungwoo321/genai-commit/commit/c48a5e23618592980cc2c626285062b2c192ce6a))
+
 ## [1.12.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.0-beta.0...v1.12.0) (2026-04-22)
 
 ## [1.12.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.11.2...v1.12.0-beta.0) (2026-04-21)
