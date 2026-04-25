@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.1...v1.12.2-beta.0) (2026-04-25)
+
+### Bug Fixes
+
+* **ui:** bind hotkeys to action prompt using inquirer expand ([46626fc](https://github.com/Seungwoo321/genai-commit/commit/46626fc6ab7538c19f722d17076cb2786e306827))
+
 ## [1.12.1](https://github.com/Seungwoo321/genai-commit/compare/v1.12.1-beta.0...v1.12.1) (2026-04-22)
 
 ## [1.12.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.0...v1.12.1-beta.0) (2026-04-22)
