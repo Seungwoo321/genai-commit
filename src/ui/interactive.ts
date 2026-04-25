@@ -4,7 +4,6 @@
 
 import inquirer from 'inquirer';
 import ora from 'ora';
-import chalk from 'chalk';
 import type { Commit } from '../types/commit.js';
 import type { AIProvider } from '../providers/types.js';
 import type { GencoConfig } from '../config/types.js';
@@ -33,19 +32,24 @@ export interface CoverageState {
 const MAX_PREVIOUS_RESPONSE_ECHO = 5000;
 
 /**
- * Prompt user to select an action
+ * Prompt user to select an action.
+ *
+ * Uses inquirer's `expand` prompt so the bracketed hotkey hints shown to the
+ * user (`[y]`, `[n]`, `[f]`, `[t]`) are bound to actual key bindings rather
+ * than being decorative. With `expand`, pressing the key + Enter selects the
+ * choice directly; `list` only supports arrow-key navigation.
  */
-async function promptAction(): Promise<UserAction> {
+export async function promptAction(): Promise<UserAction> {
   const { action } = await inquirer.prompt<{ action: UserAction }>([
     {
-      type: 'list',
+      type: 'expand',
       name: 'action',
       message: 'What would you like to do?',
       choices: [
-        { value: 'commit', name: `${chalk.yellow('[y]')} Commit all` },
-        { value: 'cancel', name: `${chalk.yellow('[n]')} Cancel` },
-        { value: 'feedback', name: `${chalk.yellow('[f]')} Provide feedback` },
-        { value: 'jira', name: `${chalk.yellow('[t]')} Assign Jira tickets` },
+        { key: 'y', value: 'commit', name: 'Commit all' },
+        { key: 'n', value: 'cancel', name: 'Cancel' },
+        { key: 'f', value: 'feedback', name: 'Provide feedback' },
+        { key: 't', value: 'jira', name: 'Assign Jira tickets' },
       ],
     },
   ]);
@@ -159,13 +163,6 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
         `Cannot commit: ${coverage.missing.length} changed file(s) are not assigned to any commit.`
       );
     }
-
-    console.log(
-      `${chalk.yellow('[y]')} Commit all  ` +
-      `${chalk.yellow('[n]')} Cancel  ` +
-      `${chalk.yellow('[f]')} Feedback  ` +
-      `${chalk.yellow('[t]')} Assign Jira tickets`
-    );
 
     const action = await promptAction();
 

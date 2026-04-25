@@ -3,7 +3,7 @@ declare module 'inquirer' {
     type: string;
     name: string;
     message: string;
-    choices?: Array<{ value: string; name: string }>;
+    choices?: Array<{ value: string; name: string; key?: string }>;
     default?: unknown;
   }
 
