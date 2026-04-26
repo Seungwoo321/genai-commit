@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.6](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5...v1.12.6) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** pause input stream in action prompt cleanup so process can exit ([#37](https://github.com/Seungwoo321/genai-commit/issues/37)) ([73ed011](https://github.com/Seungwoo321/genai-commit/commit/73ed011a6cfca2020c4610839a003d4e01a2db29))
+
 ## [1.12.6-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-26)
 
 ### Bug Fixes
