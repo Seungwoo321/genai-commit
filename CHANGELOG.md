@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.5](https://github.com/Seungwoo321/genai-commit/compare/v1.12.4...v1.12.5) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** stop the action prompt from stacking the question on each move ([#36](https://github.com/Seungwoo321/genai-commit/issues/36)) ([df8c1db](https://github.com/Seungwoo321/genai-commit/commit/df8c1db4cc7db7c3ae07cbaea2fd5a1c21a2a448))
+
 ## [1.12.5-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.4-beta.0...v1.12.5-beta.0) (2026-04-26)
 
 ### Bug Fixes
