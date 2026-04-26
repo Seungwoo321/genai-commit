@@ -15,7 +15,7 @@ describe('promptAction', () => {
     mockedPrompt.mockReset();
   });
 
-  it('uses the expand prompt type so hotkeys are bound, not decorative', async () => {
+  it('uses the list prompt type for arrow-key selection', async () => {
     mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
 
     await promptAction();
@@ -23,24 +23,37 @@ describe('promptAction', () => {
     expect(mockedPrompt).toHaveBeenCalledTimes(1);
     const questions = mockedPrompt.mock.calls[0][0] as Array<Record<string, unknown>>;
     expect(questions).toHaveLength(1);
-    expect(questions[0].type).toBe('expand');
+    expect(questions[0].type).toBe('list');
   });
 
-  it('binds y/n/f/t hotkeys to commit/cancel/feedback/jira', async () => {
+  it('defaults the cursor to commit so Enter triggers Commit all', async () => {
     mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
 
     await promptAction();
 
     const questions = mockedPrompt.mock.calls[0][0] as Array<{
-      choices: Array<{ key: string; value: UserAction }>;
+      default: UserAction;
+      choices: Array<{ value: UserAction }>;
+    }>;
+    expect(questions[0].default).toBe('commit');
+    expect(questions[0].choices[0].value).toBe('commit');
+  });
+
+  it('exposes commit/cancel/feedback/jira choices in order', async () => {
+    mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
+
+    await promptAction();
+
+    const questions = mockedPrompt.mock.calls[0][0] as Array<{
+      choices: Array<{ value: UserAction }>;
     }>;
     const choices = questions[0].choices;
 
     expect(choices).toEqual([
-      expect.objectContaining({ key: 'y', value: 'commit' }),
-      expect.objectContaining({ key: 'n', value: 'cancel' }),
-      expect.objectContaining({ key: 'f', value: 'feedback' }),
-      expect.objectContaining({ key: 't', value: 'jira' }),
+      expect.objectContaining({ value: 'commit' }),
+      expect.objectContaining({ value: 'cancel' }),
+      expect.objectContaining({ value: 'feedback' }),
+      expect.objectContaining({ value: 'jira' }),
     ]);
   });
 
