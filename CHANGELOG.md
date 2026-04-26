@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.4](https://github.com/Seungwoo321/genai-commit/compare/v1.12.3...v1.12.4) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** make y/n/f/t hotkeys move cursor in action prompt ([#35](https://github.com/Seungwoo321/genai-commit/issues/35)) ([197d9fa](https://github.com/Seungwoo321/genai-commit/commit/197d9faa19b2e795792a89db69b37996987e4e14))
+
 ## [1.12.4-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.3-beta.0...v1.12.4-beta.0) (2026-04-26)
 
 ### Bug Fixes
