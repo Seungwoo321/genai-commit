@@ -127,6 +127,14 @@ export async function promptAction(streams: PromptStreams = {}): Promise<UserAct
       settled = true;
       input.removeListener('keypress', onKeypress);
       setRaw(previousRaw);
+      // Pair with the `input.resume()` performed at prompt start. Without
+      // this, `process.stdin` stays in flowing mode, libuv keeps the I/O
+      // handle refed, and the event loop never exits — the process hangs
+      // after the action completes (e.g., after `executeCommits` finishes
+      // a successful commit) until the user sends SIGINT.
+      if (typeof input.pause === 'function') {
+        input.pause();
+      }
     };
 
     const finish = (value: UserAction): void => {

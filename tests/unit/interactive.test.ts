@@ -138,6 +138,22 @@ describe('promptAction', () => {
     });
   });
 
+  describe('process exit hygiene', () => {
+    // Regression: the prompt called `input.resume()` at start to put stdin in
+    // flowing mode, but never paired it with `input.pause()` on resolve. With
+    // a refed I/O handle still in flowing mode, libuv kept the event loop
+    // alive after the action completed, so the CLI hung after a successful
+    // commit until the user sent SIGINT.
+    it('pauses the input stream after resolving so the event loop can exit', async () => {
+      const input = new PassThrough();
+      const output = new PassThrough();
+      output.resume();
+      input.write(KEY_ENTER);
+      await promptAction({ input, output });
+      expect(input.isPaused()).toBe(true);
+    });
+  });
+
   describe('rendering does not duplicate the question on cursor moves', () => {
     // Regression: a trailing newline in render() left the cursor on a blank
     // row below the prompt, so clearRendered's loop wasted its first clear
