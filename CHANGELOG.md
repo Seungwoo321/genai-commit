@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.12.6-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** pause input stream in action prompt cleanup so process can exit ([a011d56](https://github.com/Seungwoo321/genai-commit/commit/a011d56cd18d5e6d5e1c7d7a95fbad37d19815ba))
+## [1.12.5-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** stop the action prompt from stacking the question on each move ([56810ff](https://github.com/Seungwoo321/genai-commit/commit/56810ff37710667fd622570d687c18a171e56e89))
+## [1.12.4-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** make y/n/f/t hotkeys move cursor in action prompt ([bfe2a84](https://github.com/Seungwoo321/genai-commit/commit/bfe2a844af0ac758e33e03a4ca0ebbec92745d6e))
+## [1.12.3-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-26)
+
+### Refactoring
+
+* **ui:** change action prompt from expand to list type ([db31b18](https://github.com/Seungwoo321/genai-commit/commit/db31b18083919d46d3db6da6063038854c491733))
+## [1.12.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5-beta.0...v1.12.6-beta.0) (2026-04-25)
+
+### Bug Fixes
+
+* **ui:** bind hotkeys to action prompt using inquirer expand ([46626fc](https://github.com/Seungwoo321/genai-commit/commit/46626fc6ab7538c19f722d17076cb2786e306827))
+* **ui:** stop the action prompt from stacking the question on each move ([#36](https://github.com/Seungwoo321/genai-commit/issues/36)) ([df8c1db](https://github.com/Seungwoo321/genai-commit/commit/df8c1db4cc7db7c3ae07cbaea2fd5a1c21a2a448))
+
 ## [1.12.5](https://github.com/Seungwoo321/genai-commit/compare/v1.12.4...v1.12.5) (2026-04-26)
 
 ### Bug Fixes
