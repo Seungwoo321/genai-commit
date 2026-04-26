@@ -112,7 +112,13 @@ export async function promptAction(streams: PromptStreams = {}): Promise<UserAct
       for (let i = 0; i < ACTION_CHOICES.length; i++) {
         lines.push(renderChoice(ACTION_CHOICES[i], i === cursor));
       }
-      output.write(lines.join('\n') + '\n');
+      // No trailing newline: keeps the cursor on the last rendered line so
+      // `clearRendered` can walk back through every line it wrote. With a
+      // trailing '\n' the cursor parks on a blank line below, the loop
+      // wastes its first clear on that blank, and the question line at the
+      // top is never reached — the symptom is "? What would you like to do?"
+      // accumulating once per cursor move.
+      output.write(lines.join('\n'));
       renderedLines = lines.length;
     };
 
@@ -124,6 +130,10 @@ export async function promptAction(streams: PromptStreams = {}): Promise<UserAct
     };
 
     const finish = (value: UserAction): void => {
+      // Move past the prompt so the next caller's output starts on a fresh
+      // line. `render` intentionally omits the trailing newline (see above),
+      // so we add it here.
+      output.write('\n');
       cleanup();
       resolve(value);
     };
