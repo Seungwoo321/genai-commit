@@ -1,72 +1,78 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import inquirer from 'inquirer';
-import { promptAction, type UserAction } from '../../src/ui/interactive.js';
+import { describe, it, expect } from 'vitest';
+import { PassThrough } from 'node:stream';
+import { promptAction } from '../../src/ui/interactive.js';
 
-vi.mock('inquirer', () => ({
-  default: {
-    prompt: vi.fn(),
-  },
-}));
+const KEY_DOWN = '\x1B[B';
+const KEY_UP = '\x1B[A';
+const KEY_ENTER = '\n';
 
-const mockedPrompt = vi.mocked(inquirer.prompt);
+async function run(keys: string): Promise<string> {
+  const input = new PassThrough();
+  const output = new PassThrough();
+  output.resume();
+  input.write(keys);
+  return promptAction({ input, output });
+}
 
 describe('promptAction', () => {
-  beforeEach(() => {
-    mockedPrompt.mockReset();
+  describe('hotkeys move the cursor; Enter is required to submit', () => {
+    it.each<[string, string]>([
+      ['y', 'commit'],
+      ['n', 'cancel'],
+      ['f', 'feedback'],
+      ['t', 'jira'],
+    ])('lowercase %s + Enter selects %s', async (key, expected) => {
+      expect(await run(key + KEY_ENTER)).toBe(expected);
+    });
+
+    it.each<[string, string]>([
+      ['Y', 'commit'],
+      ['N', 'cancel'],
+      ['F', 'feedback'],
+      ['T', 'jira'],
+    ])('uppercase %s + Enter selects %s', async (key, expected) => {
+      expect(await run(key + KEY_ENTER)).toBe(expected);
+    });
+
+    it('hotkey followed by Down moves cursor relative to the hotkey target', async () => {
+      // f puts cursor on feedback (index 2); Down moves to jira (index 3).
+      expect(await run('f' + KEY_DOWN + KEY_ENTER)).toBe('jira');
+    });
+
+    it('a hotkey can override an earlier hotkey before Enter', async () => {
+      // n moves to cancel; t then moves to jira; Enter submits jira.
+      expect(await run('n' + 't' + KEY_ENTER)).toBe('jira');
+    });
+
+    it('hotkey alone does NOT submit (Enter still required)', async () => {
+      // After 'y' the cursor is on commit (already the initial position),
+      // then Down moves to cancel; Enter submits cancel. If the hotkey had
+      // submitted on its own this would have returned commit instead.
+      expect(await run('y' + KEY_DOWN + KEY_ENTER)).toBe('cancel');
+    });
   });
 
-  it('uses the list prompt type for arrow-key selection', async () => {
-    mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
+  describe('arrow navigation + Enter', () => {
+    it('Enter on the initial cursor returns commit', async () => {
+      expect(await run(KEY_ENTER)).toBe('commit');
+    });
 
-    await promptAction();
+    it.each<[string, string]>([
+      [KEY_DOWN + KEY_ENTER, 'cancel'],
+      [KEY_DOWN + KEY_DOWN + KEY_ENTER, 'feedback'],
+      [KEY_DOWN + KEY_DOWN + KEY_DOWN + KEY_ENTER, 'jira'],
+    ])('Down arrows %s yield %s', async (keys, expected) => {
+      expect(await run(keys)).toBe(expected);
+    });
 
-    expect(mockedPrompt).toHaveBeenCalledTimes(1);
-    const questions = mockedPrompt.mock.calls[0][0] as Array<Record<string, unknown>>;
-    expect(questions).toHaveLength(1);
-    expect(questions[0].type).toBe('list');
-  });
+    it('Up arrow wraps from commit to jira', async () => {
+      expect(await run(KEY_UP + KEY_ENTER)).toBe('jira');
+    });
 
-  it('defaults the cursor to commit so Enter triggers Commit all', async () => {
-    mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
-
-    await promptAction();
-
-    const questions = mockedPrompt.mock.calls[0][0] as Array<{
-      default: UserAction;
-      choices: Array<{ value: UserAction }>;
-    }>;
-    expect(questions[0].default).toBe('commit');
-    expect(questions[0].choices[0].value).toBe('commit');
-  });
-
-  it('exposes commit/cancel/feedback/jira choices in order', async () => {
-    mockedPrompt.mockResolvedValueOnce({ action: 'commit' });
-
-    await promptAction();
-
-    const questions = mockedPrompt.mock.calls[0][0] as Array<{
-      choices: Array<{ value: UserAction }>;
-    }>;
-    const choices = questions[0].choices;
-
-    expect(choices).toEqual([
-      expect.objectContaining({ value: 'commit' }),
-      expect.objectContaining({ value: 'cancel' }),
-      expect.objectContaining({ value: 'feedback' }),
-      expect.objectContaining({ value: 'jira' }),
-    ]);
-  });
-
-  it.each<[UserAction]>([
-    ['commit'],
-    ['cancel'],
-    ['feedback'],
-    ['jira'],
-  ])('returns the %s action selected by the user', async (action) => {
-    mockedPrompt.mockResolvedValueOnce({ action });
-
-    const result = await promptAction();
-
-    expect(result).toBe(action);
+    it('Down arrow wraps from jira back to commit', async () => {
+      expect(
+        await run(KEY_DOWN + KEY_DOWN + KEY_DOWN + KEY_DOWN + KEY_ENTER)
+      ).toBe('commit');
+    });
   });
 });

@@ -2,8 +2,10 @@
  * Interactive UI for commit selection and actions
  */
 
+import readline from 'node:readline';
 import inquirer from 'inquirer';
 import ora from 'ora';
+import chalk from 'chalk';
 import type { Commit } from '../types/commit.js';
 import type { AIProvider } from '../providers/types.js';
 import type { GencoConfig } from '../config/types.js';
@@ -31,35 +33,145 @@ export interface CoverageState {
  */
 const MAX_PREVIOUS_RESPONSE_ECHO = 5000;
 
-/**
- * Question config for the action prompt. Exported so behavior tests can
- * drive the real inquirer with the exact same configuration the CLI uses.
- *
- * `default: 'commit'` matches the `value` of the first choice so the cursor
- * starts on "Commit all" and Enter selects it immediately.
- */
-export const ACTION_PROMPT_QUESTION = {
-  type: 'list',
-  name: 'action',
-  message: 'What would you like to do?',
-  default: 'commit',
-  choices: [
-    { value: 'commit', name: 'Commit all' },
-    { value: 'cancel', name: 'Cancel' },
-    { value: 'feedback', name: 'Provide feedback' },
-    { value: 'jira', name: 'Assign Jira tickets' },
-  ],
-};
+interface ActionChoice {
+  key: string;
+  value: UserAction;
+  name: string;
+}
+
+const ACTION_CHOICES: readonly ActionChoice[] = [
+  { key: 'y', value: 'commit', name: 'Commit all' },
+  { key: 'n', value: 'cancel', name: 'Cancel' },
+  { key: 'f', value: 'feedback', name: 'Provide feedback' },
+  { key: 't', value: 'jira', name: 'Assign Jira tickets' },
+];
+
+export interface PromptStreams {
+  input?: NodeJS.ReadableStream;
+  output?: NodeJS.WritableStream;
+}
 
 /**
- * Prompt user to select an action. The prompt module is injectable so tests
- * can swap in a custom inquirer instance with simulated stdin.
+ * Format a single choice line. Bracketed hotkey hints are colored so the key
+ * binding is visible at a glance; the focused row gets a cyan cursor and the
+ * full label is recolored cyan to match inquirer's list styling.
  */
-export async function promptAction(
-  prompt: typeof inquirer.prompt = inquirer.prompt
-): Promise<UserAction> {
-  const { action } = await prompt<{ action: UserAction }>([ACTION_PROMPT_QUESTION]);
-  return action;
+function renderChoice(choice: ActionChoice, focused: boolean): string {
+  const label = `${chalk.yellow(`[${choice.key}]`)} ${choice.name}`;
+  const prefix = focused ? chalk.cyan('❯ ') : '  ';
+  return prefix + (focused ? chalk.cyan(label) : label);
+}
+
+/**
+ * Prompt the user for the next action.
+ *
+ * Renders an arrow-key navigable list. The `y`/`n`/`f`/`t` hotkeys advertised
+ * in the choice labels move the cursor to the corresponding row but do NOT
+ * submit on their own — submission requires Enter. This preserves the "look
+ * before you confirm" review step a destination-key-fires-immediately design
+ * would skip. The original `inquirer` `list` prompt ignored printable keys
+ * entirely, so a `y` keystroke produced no visible effect; this prompt
+ * makes the hinted keys behave as documented while keeping Enter as the
+ * sole trigger for the action.
+ *
+ * Streams are injectable so behavior tests can drive the prompt with a
+ * `PassThrough` input instead of a TTY.
+ */
+export async function promptAction(streams: PromptStreams = {}): Promise<UserAction> {
+  const input = (streams.input ?? process.stdin) as NodeJS.ReadStream;
+  const output = (streams.output ?? process.stdout) as NodeJS.WriteStream;
+
+  return new Promise<UserAction>((resolve) => {
+    let cursor = 0;
+    let renderedLines = 0;
+    let settled = false;
+
+    const supportsRaw = typeof input.setRawMode === 'function';
+    const previousRaw = supportsRaw ? Boolean(input.isRaw) : false;
+
+    const setRaw = (mode: boolean): void => {
+      if (supportsRaw) {
+        input.setRawMode(mode);
+      }
+    };
+
+    const clearRendered = (): void => {
+      if (renderedLines === 0) return;
+      output.write('\r');
+      for (let i = 0; i < renderedLines; i++) {
+        if (i > 0) output.write('\x1B[1A');
+        output.write('\x1B[2K');
+      }
+      renderedLines = 0;
+    };
+
+    const render = (): void => {
+      clearRendered();
+      const lines: string[] = [];
+      lines.push(`${chalk.green('?')} What would you like to do?`);
+      for (let i = 0; i < ACTION_CHOICES.length; i++) {
+        lines.push(renderChoice(ACTION_CHOICES[i], i === cursor));
+      }
+      output.write(lines.join('\n') + '\n');
+      renderedLines = lines.length;
+    };
+
+    const cleanup = (): void => {
+      if (settled) return;
+      settled = true;
+      input.removeListener('keypress', onKeypress);
+      setRaw(previousRaw);
+    };
+
+    const finish = (value: UserAction): void => {
+      cleanup();
+      resolve(value);
+    };
+
+    const onKeypress = (
+      str: string | undefined,
+      key: { name?: string; ctrl?: boolean; sequence?: string } | undefined
+    ): void => {
+      if (settled) return;
+      const k = key ?? {};
+
+      if (k.ctrl && k.name === 'c') {
+        cleanup();
+        process.kill(process.pid, 'SIGINT');
+        return;
+      }
+
+      if (k.name === 'up') {
+        cursor = (cursor - 1 + ACTION_CHOICES.length) % ACTION_CHOICES.length;
+        render();
+        return;
+      }
+      if (k.name === 'down') {
+        cursor = (cursor + 1) % ACTION_CHOICES.length;
+        render();
+        return;
+      }
+      if (k.name === 'return' || k.name === 'enter') {
+        finish(ACTION_CHOICES[cursor].value);
+        return;
+      }
+
+      const ch = (str ?? '').toLowerCase();
+      const hit = ACTION_CHOICES.find((c) => c.key === ch);
+      if (hit) {
+        cursor = ACTION_CHOICES.indexOf(hit);
+        render();
+      }
+    };
+
+    readline.emitKeypressEvents(input);
+    setRaw(true);
+    if (typeof input.resume === 'function') {
+      input.resume();
+    }
+    input.on('keypress', onKeypress);
+    render();
+  });
 }
 
 /**
@@ -168,6 +280,13 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
         `Cannot commit: ${coverage.missing.length} changed file(s) are not assigned to any commit.`
       );
     }
+
+    console.log(
+      `${chalk.yellow('[y]')} Commit all  ` +
+      `${chalk.yellow('[n]')} Cancel  ` +
+      `${chalk.yellow('[f]')} Feedback  ` +
+      `${chalk.yellow('[t]')} Assign Jira tickets`
+    );
 
     const action = await promptAction();
 
