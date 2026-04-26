@@ -32,28 +32,33 @@ export interface CoverageState {
 const MAX_PREVIOUS_RESPONSE_ECHO = 5000;
 
 /**
- * Prompt user to select an action.
+ * Question config for the action prompt. Exported so behavior tests can
+ * drive the real inquirer with the exact same configuration the CLI uses.
  *
- * Uses inquirer's `expand` prompt so the bracketed hotkey hints shown to the
- * user (`[y]`, `[n]`, `[f]`, `[t]`) are bound to actual key bindings rather
- * than being decorative. With `expand`, pressing the key + Enter selects the
- * choice directly; `list` only supports arrow-key navigation.
+ * `default: 'commit'` matches the `value` of the first choice so the cursor
+ * starts on "Commit all" and Enter selects it immediately.
  */
-export async function promptAction(): Promise<UserAction> {
-  const { action } = await inquirer.prompt<{ action: UserAction }>([
-    {
-      type: 'expand',
-      name: 'action',
-      message: 'What would you like to do?',
-      choices: [
-        { key: 'y', value: 'commit', name: 'Commit all' },
-        { key: 'n', value: 'cancel', name: 'Cancel' },
-        { key: 'f', value: 'feedback', name: 'Provide feedback' },
-        { key: 't', value: 'jira', name: 'Assign Jira tickets' },
-      ],
-    },
-  ]);
+export const ACTION_PROMPT_QUESTION = {
+  type: 'list',
+  name: 'action',
+  message: 'What would you like to do?',
+  default: 'commit',
+  choices: [
+    { value: 'commit', name: 'Commit all' },
+    { value: 'cancel', name: 'Cancel' },
+    { value: 'feedback', name: 'Provide feedback' },
+    { value: 'jira', name: 'Assign Jira tickets' },
+  ],
+};
 
+/**
+ * Prompt user to select an action. The prompt module is injectable so tests
+ * can swap in a custom inquirer instance with simulated stdin.
+ */
+export async function promptAction(
+  prompt: typeof inquirer.prompt = inquirer.prompt
+): Promise<UserAction> {
+  const { action } = await prompt<{ action: UserAction }>([ACTION_PROMPT_QUESTION]);
   return action;
 }
 

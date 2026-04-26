@@ -3,12 +3,21 @@ declare module 'inquirer' {
     type: string;
     name: string;
     message: string;
-    choices?: Array<{ value: string; name: string; key?: string }>;
+    choices?: Array<{ value: string; name: string }>;
     default?: unknown;
   }
 
+  interface PromptModule {
+    <T>(questions: PromptQuestion[]): Promise<T> & { ui?: unknown };
+  }
+
   interface Inquirer {
-    prompt<T>(questions: PromptQuestion[]): Promise<T>;
+    prompt: PromptModule;
+    createPromptModule(opts?: {
+      input?: NodeJS.ReadableStream;
+      output?: NodeJS.WritableStream;
+      skipTTYChecks?: boolean;
+    }): PromptModule;
   }
 
   const inquirer: Inquirer;
