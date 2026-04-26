@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.12.4-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.3-beta.0...v1.12.4-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** make y/n/f/t hotkeys move cursor in action prompt ([bfe2a84](https://github.com/Seungwoo321/genai-commit/commit/bfe2a844af0ac758e33e03a4ca0ebbec92745d6e))
+## [1.12.3-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.3-beta.0...v1.12.4-beta.0) (2026-04-26)
+
+### Refactoring
+
+* **ui:** change action prompt from expand to list type ([db31b18](https://github.com/Seungwoo321/genai-commit/commit/db31b18083919d46d3db6da6063038854c491733))
+## [1.12.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.3-beta.0...v1.12.4-beta.0) (2026-04-25)
+
+### Bug Fixes
+
+* **ui:** bind hotkeys to action prompt using inquirer expand ([46626fc](https://github.com/Seungwoo321/genai-commit/commit/46626fc6ab7538c19f722d17076cb2786e306827))
+
+### Refactoring
+
+* **ui:** change action prompt from expand to list type ([#34](https://github.com/Seungwoo321/genai-commit/issues/34)) ([0311b41](https://github.com/Seungwoo321/genai-commit/commit/0311b41cd82e5b4d45d041136d8a88d11185869a))
+
 ## [1.12.3](https://github.com/Seungwoo321/genai-commit/compare/v1.12.2...v1.12.3) (2026-04-26)
 
 ### Refactoring
