@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.12.7-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-29)
+
+### Bug Fixes
+
+* **ui:** skip stale commit re-render in interactive loop ([2a9c211](https://github.com/Seungwoo321/genai-commit/commit/2a9c21136e834d3bb9f0287a9b7bf15067da74c5))
+## [1.12.6-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** pause input stream in action prompt cleanup so process can exit ([a011d56](https://github.com/Seungwoo321/genai-commit/commit/a011d56cd18d5e6d5e1c7d7a95fbad37d19815ba))
+## [1.12.5-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** stop the action prompt from stacking the question on each move ([56810ff](https://github.com/Seungwoo321/genai-commit/commit/56810ff37710667fd622570d687c18a171e56e89))
+## [1.12.4-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** make y/n/f/t hotkeys move cursor in action prompt ([bfe2a84](https://github.com/Seungwoo321/genai-commit/commit/bfe2a844af0ac758e33e03a4ca0ebbec92745d6e))
+## [1.12.3-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-26)
+
+### Refactoring
+
+* **ui:** change action prompt from expand to list type ([db31b18](https://github.com/Seungwoo321/genai-commit/commit/db31b18083919d46d3db6da6063038854c491733))
+## [1.12.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-25)
+
+### Bug Fixes
+
+* **ui:** bind hotkeys to action prompt using inquirer expand ([46626fc](https://github.com/Seungwoo321/genai-commit/commit/46626fc6ab7538c19f722d17076cb2786e306827))
+* **ui:** pause input stream in action prompt cleanup so process can exit ([#37](https://github.com/Seungwoo321/genai-commit/issues/37)) ([73ed011](https://github.com/Seungwoo321/genai-commit/commit/73ed011a6cfca2020c4610839a003d4e01a2db29))
+
 ## [1.12.6](https://github.com/Seungwoo321/genai-commit/compare/v1.12.5...v1.12.6) (2026-04-26)
 
 ### Bug Fixes

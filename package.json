@@ -1,6 +1,6 @@
 {
   "name": "genai-commit",
-  "version": "1.12.6",
+  "version": "1.12.7-beta.0",
   "description": "AI-powered commit message generator using Claude Code or Cursor CLI",
   "type": "module",
   "main": "./dist/index.js",
