@@ -289,9 +289,20 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
   let commits = params.initialCommits;
   let lastResponse = params.initialResponse;
   let coverage = params.initialCoverage;
+  // Re-display only when the proposed commit set actually changes.
+  // The previous unconditional re-print on every iteration buried the
+  // outcome of the prior action — most importantly the
+  // `Commit blocked: ...` error from a missing-coverage [y] attempt —
+  // above the next prompt, making it look like Enter did nothing. Both
+  // mutation paths (`feedback` regen and `jira` merge) assign a new
+  // array reference, so reference equality is sufficient.
+  let displayedCommits: Commit[] | null = null;
 
   while (true) {
-    displayCommits(commits);
+    if (commits !== displayedCommits) {
+      displayCommits(commits);
+      displayedCommits = commits;
+    }
 
     if (coverage.missing.length > 0) {
       logger.warning(
