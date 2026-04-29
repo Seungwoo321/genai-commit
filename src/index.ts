@@ -39,7 +39,29 @@ export {
 } from './git/status.js';
 export type { RemoteStatus } from './git/status.js';
 export { generateTreeSummary, generateFullTreeSummary } from './git/tree.js';
-export { getModifiedDiffs, getDiffContent } from './git/diff.js';
+export {
+  getModifiedDiffs,
+  getDiffContent,
+  loadFileDiffs,
+  formatModifiedDiffs,
+  getDiffContentForFiles,
+} from './git/diff.js';
+export { planChunks, chunkFiles } from './git/chunk.js';
+export type { Chunk, ChunkBudget } from './git/chunk.js';
+export {
+  computeClusters,
+  packClusters,
+  planClusteredChunks,
+} from './git/cluster.js';
+export type { Cluster } from './git/cluster.js';
+export {
+  detectSourceLanguage,
+  extractImports,
+  resolveImport,
+  buildImportGraph,
+} from './git/imports.js';
+export type { SourceLanguage } from './git/imports.js';
+export { loadSourceContents } from './git/source.js';
 export { executeCommits, stageFiles } from './git/executor.js';
 
 // Parsers
