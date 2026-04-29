@@ -279,6 +279,13 @@ export interface InteractiveLoopInput {
   originalInput: string;
   initialCoverage: CoverageState;
   config: GencoConfig;
+  /**
+   * Whether the [f] Feedback action can be used. Disabled for multi-chunk
+   * runs because the regen path replays a single original input that no
+   * longer covers the whole changeset — silently regenerating only the last
+   * chunk would be worse than refusing the action.
+   */
+  feedbackEnabled?: boolean;
 }
 
 /**
@@ -286,6 +293,7 @@ export interface InteractiveLoopInput {
  */
 export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<void> {
   const { provider, validFiles, originalInput, config } = params;
+  const feedbackEnabled = params.feedbackEnabled ?? true;
   let commits = params.initialCommits;
   let lastResponse = params.initialResponse;
   let coverage = params.initialCoverage;
@@ -340,6 +348,14 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
         return;
 
       case 'feedback': {
+        if (!feedbackEnabled) {
+          logger.warning(
+            'Feedback regeneration is disabled for multi-chunk runs. ' +
+            'Re-run with a smaller --maxInputSize / fewer changes, or commit ' +
+            'as proposed and amend afterwards.'
+          );
+          break;
+        }
         const feedback = await promptFeedback();
 
         if (!feedback.trim()) {
