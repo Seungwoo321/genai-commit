@@ -16,6 +16,8 @@ AI-powered commit message generator using Claude Code, Cursor CLI, or Codex CLI.
 - **Jira integration** - Assign Jira tickets to commits and auto-merge related changes
 - **Interactive workflow** - Review, provide feedback, and refine before committing
 - **Smart file grouping** - Intelligently splits changes into logical commits
+- **Cluster-aware chunking** - For large changesets, builds an import graph and groups related files into chunks so each AI call sees a coherent slice
+- **Cross-chunk semantic merge** - When chunks produce commits describing the same logical change, a merge pass unifies them with validation rollback (false splits over false merges)
 - **Automatic staging** - Stages all changes (including untracked, renamed, and deleted files) before diff analysis
 - **Works with empty repositories** - Generates commits even without prior commit history
 - **Remote sync protection** - Aborts early if the branch is behind or diverged from remote
@@ -43,25 +45,44 @@ flowchart TD
     A3 --> B[Collect Git Changes]
     B --> C{Changes Found?}
     C -->|No| D[Exit: No changes]
-    C -->|Yes| E[Generate Tree Summary]
-    E --> F[Build AI Prompt]
-    F --> G{Select Provider}
-    G -->|Claude Code| H[Claude Code CLI]
-    G -->|Cursor CLI| I[Cursor CLI]
-    H --> J[Parse JSON Response]
-    I --> K[Parse Delimiter Response]
-    J --> L[Display Proposed Commits]
+    C -->|Yes| E[Load Diffs and Source]
+    E --> F[Build Import Graph]
+    F --> G{Strategy}
+    G -->|edges > 0| G1[Cluster: WCC + FFD bin pack]
+    G -->|no edges| G2[Directory-based chunking]
+    G1 --> H[Per-chunk AI Generation]
+    G2 --> H
+    H --> I{Chunks &gt; 1?}
+    I -->|yes| J[Cross-chunk Semantic Merge]
+    I -->|no| K[Skip merge]
+    J --> J1{Validate: coverage + title}
+    J1 -->|ok| L[Display Proposed Commits]
+    J1 -->|fail| K
     K --> L
     L --> M{User Action}
     M -->|y| N[Execute git add + commit]
     M -->|n| O[Cancel]
     M -->|f| P[Get Feedback]
     M -->|t| Q[Assign Jira Tickets]
-    P --> F
+    P --> H
     Q --> R[Merge Same-Ticket Commits]
     R --> L
     N --> S[Done]
 ```
+
+### Architecture Principle
+
+**Deterministic logic stays in code; only the truly non-deterministic parts go to the LLM.**
+
+- **Deterministic (program-based)**
+  - Import graph extraction (regex per language: ts/js/py/go/rust/java)
+  - Weakly-Connected-Components clustering of related files
+  - First-Fit Decreasing bin packing into chunk-size budgets
+  - Coverage validation, title-length checks, file-path verbatim enforcement
+- **Non-deterministic (LLM-based)**
+  - Writing natural-language titles and messages from a grouped file set
+  - Judging when files in different chunks describe the same logical change
+  - Rejected outputs roll back to per-chunk results — no retry doubling AI cost
 
 ## Prerequisites
 
@@ -216,10 +237,10 @@ The tool uses sensible defaults but can be configured:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `maxInputSize` | 30000 | Maximum input size in bytes |
-| `maxDiffSize` | 15000 | Maximum diff size in bytes |
+| `maxInputSize` | 30000 | Per-chunk input budget in characters; drives clustering and bin-packing |
+| `maxDiffSize` | 15000 | Maximum diff size per file in bytes (larger diffs are summarized) |
 | `timeout` | 120000 | AI request timeout in ms |
-| `treeDepth` | 3 | Directory depth for tree compression |
+| `maxRetries` | 2 | Per-chunk AI retry count on failure |
 
 ## Requirements
 

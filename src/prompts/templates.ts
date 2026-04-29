@@ -3,7 +3,7 @@
  */
 
 export type ProviderPromptType = 'claude' | 'cursor' | 'codex';
-export type PromptCategory = 'commit' | 'regroup';
+export type PromptCategory = 'commit' | 'regroup' | 'merge';
 
 // Claude Code prompts (JSON output)
 const CLAUDE_COMMIT_PROMPT = `You are a commit message generator.
@@ -53,6 +53,36 @@ Rules:
 Language settings (check the input for TITLE_LANG and MESSAGE_LANG):
 - TITLE_LANG: Language for commit title
 - MESSAGE_LANG: Language for detailed message
+
+Output ONLY valid JSON matching the required schema. No other text.`;
+
+const CLAUDE_MERGE_PROMPT = `You are a commit message merger.
+
+You will receive a list of commits, each generated independently from a chunk
+of a larger changeset. Some of these commits may describe the SAME logical
+change (same scope, same intent), split only because their files happened to
+land in different chunks. Your job is to identify those and merge them into
+single commits.
+
+Rules:
+1. Two commits should be merged if their titles describe the same logical
+   change — same conventional-commit type, same scope, same intent. If you
+   are NOT confident the changes are the same, KEEP THEM SEPARATE. False
+   merges are worse than false splits.
+2. When merging:
+   - Combine all files from all merged commits (no duplicates)
+   - Write a new title that summarizes the merged change
+   - Write a new message that combines the relevant points (concise, not
+     a concatenation)
+3. Commits describing distinct logical changes MUST remain separate, even
+   if they touch nearby files.
+4. CRITICAL: Every file from every input commit MUST appear in exactly one
+   output commit. Do NOT drop, invent, or rename any file path.
+5. Conventional Commits format: type(scope): description, title under 72 chars.
+6. NEVER include Jira ticket numbers.
+
+Language settings (check the input for TITLE_LANG and MESSAGE_LANG): same
+as the original generation step.
 
 Output ONLY valid JSON matching the required schema. No other text.`;
 
@@ -133,6 +163,25 @@ FILES: src/components/Button.tsx, src/components/Input.tsx
 TITLE: feat(ui): add Button and Input components (AS-123)
 MESSAGE: Button과 Input 컴포넌트를 추가했습니다.`;
 
+const CURSOR_MERGE_PROMPT = `You are a commit message merger. Identify commits that describe the same logical change and merge them.
+
+IMPORTANT: You MUST reply ONLY in the EXACT format below. No markdown, no explanation, no other text.
+
+===COMMIT===
+FILES: file1.ts, file2.ts
+TITLE: type(scope): description
+MESSAGE: detailed message here
+
+RULES:
+1. Two input commits should be merged if their titles describe the same logical change (same type, same scope, same intent). When in doubt, keep them SEPARATE — false merges are worse than false splits.
+2. When merging: combine all files (no duplicates), write a new summary title, write a concise combined message
+3. Commits describing distinct logical changes MUST remain separate
+4. CRITICAL: every file from every input commit MUST appear in exactly one output commit. Do not drop, invent, or rename any file path.
+5. Follow Conventional Commits, title under 72 characters
+6. NEVER include Jira ticket numbers
+
+Language Settings (check input for TITLE_LANG and MESSAGE_LANG): same as the original generation step.`;
+
 // JSON Schema for Claude output
 const COMMIT_SCHEMA = {
   type: 'object',
@@ -165,10 +214,17 @@ export function getPromptTemplate(
   category: PromptCategory
 ): string {
   if (provider === 'claude') {
-    return category === 'commit' ? CLAUDE_COMMIT_PROMPT : CLAUDE_REGROUP_PROMPT;
-  } else {
-    // Cursor and Codex share the delimiter-format prompt
-    return category === 'commit' ? CURSOR_COMMIT_PROMPT : CURSOR_REGROUP_PROMPT;
+    switch (category) {
+      case 'commit': return CLAUDE_COMMIT_PROMPT;
+      case 'regroup': return CLAUDE_REGROUP_PROMPT;
+      case 'merge': return CLAUDE_MERGE_PROMPT;
+    }
+  }
+  // Cursor and Codex share the delimiter-format prompt
+  switch (category) {
+    case 'commit': return CURSOR_COMMIT_PROMPT;
+    case 'regroup': return CURSOR_REGROUP_PROMPT;
+    case 'merge': return CURSOR_MERGE_PROMPT;
   }
 }
 
