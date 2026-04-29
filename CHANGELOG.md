@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.12.7](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6...v1.12.7) (2026-04-29)
+
+### Bug Fixes
+
+* **ui:** skip stale commit re-render in interactive loop ([#38](https://github.com/Seungwoo321/genai-commit/issues/38)) ([fadd73b](https://github.com/Seungwoo321/genai-commit/commit/fadd73b317c101d13caa5aa79deec5e8506dada2))
+
 ## [1.12.7-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.6-beta.0...v1.12.7-beta.0) (2026-04-29)
 
 ### Bug Fixes
