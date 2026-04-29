@@ -6,7 +6,7 @@ import type { CommitResult } from '../types/commit.js';
 
 export type ProviderType = 'claude-code' | 'cursor-cli' | 'codex-cli';
 export type ProviderAlias = 'claude' | 'cursor' | 'codex';
-export type PromptType = 'commit' | 'regroup';
+export type PromptType = 'commit' | 'regroup' | 'merge';
 
 /**
  * Canonical provider names and their short aliases.
