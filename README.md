@@ -18,6 +18,7 @@ AI-powered commit message generator using Claude Code, Cursor CLI, or Codex CLI.
 - **Smart file grouping** - Intelligently splits changes into logical commits
 - **Cluster-aware chunking** - For large changesets, builds an import graph and groups related files into chunks so each AI call sees a coherent slice
 - **Cross-chunk semantic merge** - When chunks produce commits describing the same logical change, a merge pass unifies them with validation rollback (false splits over false merges)
+- **Resumable batched commits** - Large changesets are frozen into a deterministic plan and committed in batches; stop anytime and continue later with `--resume`
 - **Automatic staging** - Stages all changes (including untracked, renamed, and deleted files) before diff analysis
 - **Works with empty repositories** - Generates commits even without prior commit history
 - **Remote sync protection** - Aborts early if the branch is behind or diverged from remote
@@ -46,13 +47,19 @@ flowchart TD
     B --> C{Changes Found?}
     C -->|No| D[Exit: No changes]
     C -->|Yes| E[Load Diffs and Source]
-    E --> F[Build Import Graph]
+    E --> RP{Saved plan fresh?}
+    RP -->|yes| PL[Reuse / resume frozen plan]
+    RP -->|no| F[Build Import Graph]
     F --> G{Strategy}
     G -->|edges > 0| G1[Cluster: WCC + FFD bin pack]
     G -->|no edges| G2[Directory-based chunking]
-    G1 --> H[Per-chunk AI Generation]
-    G2 --> H
-    H --> I{Chunks &gt; 1?}
+    G1 --> BS[Choose batch count]
+    G2 --> BS
+    BS --> FR[Freeze plan to .git/genai-commit/plan.json]
+    FR --> PL
+    PL --> BL[Next pending batch]
+    BL --> H[Per-chunk AI Generation]
+    H --> I{Batch chunks &gt; 1?}
     I -->|yes| J[Cross-chunk Semantic Merge]
     I -->|no| K[Skip merge]
     J --> J1{Validate: coverage + title}
@@ -60,14 +67,16 @@ flowchart TD
     J1 -->|fail| K
     K --> L
     L --> M{User Action}
-    M -->|y| N[Execute git add + commit]
-    M -->|n| O[Cancel]
+    M -->|y| N[Commit batch + mark chunks done]
+    M -->|n| O[Cancel: --resume to continue]
     M -->|f| P[Get Feedback]
     M -->|t| Q[Assign Jira Tickets]
     P --> H
     Q --> R[Merge Same-Ticket Commits]
     R --> L
-    N --> S[Done]
+    N --> MB{More batches?}
+    MB -->|yes| BL
+    MB -->|no| S[Done]
 ```
 
 ### Architecture Principle
@@ -167,9 +176,9 @@ After generating commit messages, you'll see an interactive menu:
 
 | Option | Description |
 |--------|-------------|
-| `[y]` | Commit all proposed commits |
-| `[n]` | Cancel |
-| `[f]` | Provide feedback to regenerate |
+| `[y]` | Commit the proposed commits (the current batch, when batched) |
+| `[n]` | Cancel (re-run with `--resume` to continue a partially committed plan) |
+| `[f]` | Provide feedback to regenerate (single-chunk batches only) |
 | `[t]` | Assign Jira tickets and regroup commits |
 
 ## Options
@@ -180,6 +189,10 @@ After generating commit messages, you'll see an interactive menu:
 | `--title-lang <lang>` | Language for commit title | `en` |
 | `--message-lang <lang>` | Language for commit message | `ko` |
 | `--model <model>` | Model to use | `haiku` (Claude) / `claude-4.5-sonnet` (Cursor) / `gpt-5.4` (Codex) |
+| `--timeout <seconds>` | AI provider timeout in seconds | `120` |
+| `--batches <n>` | Split a multi-chunk run into n batches | prompt (interactive) / all at once (non-interactive) |
+| `--resume` | Continue a saved plan from the next pending batch | - |
+| `--fresh` | Discard any saved plan and re-plan from the current changeset | - |
 
 ## Examples
 
@@ -213,6 +226,28 @@ genai-commit claude
 4. Enter your feedback (e.g., "Split the auth changes into separate commits")
 5. AI regenerates based on your feedback
 6. Press `y` to commit
+
+## Batched & Resumable Commits
+
+A large changeset is split into deterministic chunks. To keep the split stable across runs, the full chunk partition is computed once and frozen to a plan at `.git/genai-commit/plan.json` (inside `.git`, so it is never staged). The same changeset always yields the same chunks.
+
+You then commit the plan in batches, one batch at a time. After a batch's commits succeed, those chunks are marked done in the plan. If you stop partway — or cancel a batch — re-run with `--resume` to continue from the next pending batch.
+
+```bash
+# Split a large run into 5 batches (commit one batch, then the next)
+genai-commit claude --batches 5
+
+# Continue a saved plan from where you left off
+genai-commit claude --resume
+
+# Discard the saved plan and re-plan from the current changeset
+genai-commit claude --fresh
+```
+
+- Run interactively without `--batches` and you're prompted to choose how many batches to use.
+- Run non-interactively (no TTY) and the changeset is committed all at once.
+- A saved plan is reused automatically while it still matches the working tree. If the changeset drifts so the plan no longer matches, it is re-planned — or, with `--resume`, the mismatch is reported and `--fresh` is requested.
+- Feedback (`[f]`) is available only for single-chunk batches, since a multi-chunk batch would regenerate just part of its commits.
 
 ## Supported Commit Types
 

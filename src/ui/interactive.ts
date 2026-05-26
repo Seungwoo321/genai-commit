@@ -39,12 +39,18 @@ interface ActionChoice {
   name: string;
 }
 
-const ACTION_CHOICES: readonly ActionChoice[] = [
-  { key: 'y', value: 'commit', name: 'Commit all' },
-  { key: 'n', value: 'cancel', name: 'Cancel' },
-  { key: 'f', value: 'feedback', name: 'Provide feedback' },
-  { key: 't', value: 'jira', name: 'Assign Jira tickets' },
-];
+/**
+ * Build the action list. The commit label is parameterized so a batched run
+ * can say "Commit this batch" while a single-pass run keeps "Commit all".
+ */
+function buildChoices(commitLabel: string): ActionChoice[] {
+  return [
+    { key: 'y', value: 'commit', name: commitLabel },
+    { key: 'n', value: 'cancel', name: 'Cancel' },
+    { key: 'f', value: 'feedback', name: 'Provide feedback' },
+    { key: 't', value: 'jira', name: 'Assign Jira tickets' },
+  ];
+}
 
 export interface PromptStreams {
   input?: NodeJS.ReadableStream;
@@ -77,9 +83,13 @@ function renderChoice(choice: ActionChoice, focused: boolean): string {
  * Streams are injectable so behavior tests can drive the prompt with a
  * `PassThrough` input instead of a TTY.
  */
-export async function promptAction(streams: PromptStreams = {}): Promise<UserAction> {
+export async function promptAction(
+  streams: PromptStreams = {},
+  commitLabel = 'Commit all'
+): Promise<UserAction> {
   const input = (streams.input ?? process.stdin) as NodeJS.ReadStream;
   const output = (streams.output ?? process.stdout) as NodeJS.WriteStream;
+  const choices = buildChoices(commitLabel);
 
   return new Promise<UserAction>((resolve) => {
     let cursor = 0;
@@ -109,8 +119,8 @@ export async function promptAction(streams: PromptStreams = {}): Promise<UserAct
       clearRendered();
       const lines: string[] = [];
       lines.push(`${chalk.green('?')} What would you like to do?`);
-      for (let i = 0; i < ACTION_CHOICES.length; i++) {
-        lines.push(renderChoice(ACTION_CHOICES[i], i === cursor));
+      for (let i = 0; i < choices.length; i++) {
+        lines.push(renderChoice(choices[i], i === cursor));
       }
       // No trailing newline: keeps the cursor on the last rendered line so
       // `clearRendered` can walk back through every line it wrote. With a
@@ -160,24 +170,24 @@ export async function promptAction(streams: PromptStreams = {}): Promise<UserAct
       }
 
       if (k.name === 'up') {
-        cursor = (cursor - 1 + ACTION_CHOICES.length) % ACTION_CHOICES.length;
+        cursor = (cursor - 1 + choices.length) % choices.length;
         render();
         return;
       }
       if (k.name === 'down') {
-        cursor = (cursor + 1) % ACTION_CHOICES.length;
+        cursor = (cursor + 1) % choices.length;
         render();
         return;
       }
       if (k.name === 'return' || k.name === 'enter') {
-        finish(ACTION_CHOICES[cursor].value);
+        finish(choices[cursor].value);
         return;
       }
 
       const ch = (str ?? '').toLowerCase();
-      const hit = ACTION_CHOICES.find((c) => c.key === ch);
+      const hit = choices.find((c) => c.key === ch);
       if (hit) {
-        cursor = ACTION_CHOICES.indexOf(hit);
+        cursor = choices.indexOf(hit);
         render();
       }
     };
@@ -286,14 +296,29 @@ export interface InteractiveLoopInput {
    * chunk would be worse than refusing the action.
    */
   feedbackEnabled?: boolean;
+  /**
+   * Present when this loop is committing one batch of a multi-batch run.
+   * Drives the "Batch i/N" header and relabels the commit action so the user
+   * knows [y] commits only the current batch, not the whole changeset.
+   */
+  batchInfo?: { index: number; total: number };
 }
 
+export type LoopResult = 'committed' | 'cancelled';
+
 /**
- * Main interactive loop
+ * Main interactive loop.
+ *
+ * Returns `'committed'` once a commit action succeeds and `'cancelled'` when
+ * the user backs out. The batch orchestrator uses this to decide whether to
+ * advance to the next batch (committed) or stop and keep the frozen plan for
+ * a later resume (cancelled).
  */
-export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<void> {
+export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<LoopResult> {
   const { provider, validFiles, originalInput, config } = params;
   const feedbackEnabled = params.feedbackEnabled ?? true;
+  const batchInfo = params.batchInfo;
+  const commitLabel = batchInfo ? `Commit this batch (${batchInfo.index}/${batchInfo.total})` : 'Commit all';
   let commits = params.initialCommits;
   let lastResponse = params.initialResponse;
   let coverage = params.initialCoverage;
@@ -308,6 +333,11 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
 
   while (true) {
     if (commits !== displayedCommits) {
+      if (batchInfo) {
+        console.log(
+          chalk.cyan(`\n=== Batch ${batchInfo.index}/${batchInfo.total} ===`)
+        );
+      }
       displayCommits(commits);
       displayedCommits = commits;
     }
@@ -319,13 +349,13 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
     }
 
     console.log(
-      `${chalk.yellow('[y]')} Commit all  ` +
+      `${chalk.yellow('[y]')} ${commitLabel}  ` +
       `${chalk.yellow('[n]')} Cancel  ` +
       `${chalk.yellow('[f]')} Feedback  ` +
       `${chalk.yellow('[t]')} Assign Jira tickets`
     );
 
-    const action = await promptAction();
+    const action = await promptAction({}, commitLabel);
 
     switch (action) {
       case 'commit': {
@@ -338,14 +368,14 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
         }
         const success = await executeCommits(commits);
         if (success) {
-          return;
+          return 'committed';
         }
         break;
       }
 
       case 'cancel':
         logger.warning('Cancelled');
-        return;
+        return 'cancelled';
 
       case 'feedback': {
         if (!feedbackEnabled) {
@@ -406,6 +436,60 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
         break;
     }
   }
+}
+
+/**
+ * Ask how to batch a multi-chunk run, returning the chosen chunks-per-batch.
+ *
+ * Offered choices are derived from the chunk count: "all at once" plus a few
+ * batch-count splits (3 / 5 / 10 batches) that actually divide the set, plus a
+ * custom size. The split choice lives here — right after planning, when the
+ * chunk count is known — rather than at the commit prompt, because the
+ * timeout / token-exhaustion risk this guards against happens DURING per-chunk
+ * generation, which precedes any commit confirmation.
+ *
+ * Caller must only invoke this for chunkCount >= 2 on an interactive TTY.
+ */
+export async function promptBatchCount(chunkCount: number): Promise<number> {
+  const CUSTOM = -1;
+  const choices: { name: string; value: number }[] = [
+    { name: `All at once (1 batch, ${chunkCount} chunks)`, value: chunkCount },
+  ];
+  const seenSizes = new Set<number>([chunkCount]);
+  for (const n of [3, 5, 10]) {
+    if (n >= chunkCount) continue;
+    const size = Math.ceil(chunkCount / n);
+    if (seenSizes.has(size)) continue;
+    seenSizes.add(size);
+    const actual = Math.ceil(chunkCount / size);
+    choices.push({ name: `${actual} batches (~${size} chunks each)`, value: size });
+  }
+  choices.push({ name: 'Custom batch size...', value: CUSTOM });
+
+  const { size } = await inquirer.prompt<{ size: number }>([
+    {
+      type: 'list',
+      name: 'size',
+      message: `How would you like to process these ${chunkCount} chunks?`,
+      choices,
+    },
+  ]);
+
+  if (size !== CUSTOM) return size;
+
+  const { custom } = await inquirer.prompt<{ custom: string }>([
+    {
+      type: 'input',
+      name: 'custom',
+      message: 'Chunks per batch:',
+      default: String(Math.ceil(chunkCount / 5)),
+      validate: (v: string): true | string => {
+        const num = Number(v);
+        return Number.isInteger(num) && num >= 1 ? true : 'Enter a positive integer';
+      },
+    },
+  ]);
+  return Math.max(1, Math.min(chunkCount, Math.floor(Number(custom))));
 }
 
 /**
