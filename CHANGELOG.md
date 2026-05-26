@@ -1,5 +1,63 @@
 # Changelog
 
+## [1.14.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-05-26)
+
+### Features
+
+* **cli:** add resumable batched commit workflow ([e354d21](https://github.com/Seungwoo321/genai-commit/commit/e354d2154629c5f961f2f37a79f26323a36dfb9e))
+
+### Documentation
+
+* **readme:** document resumable batched commit workflow ([605bcc7](https://github.com/Seungwoo321/genai-commit/commit/605bcc7e256fa798338cf7cbd40268a98ad5c853))
+## [1.13.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-29)
+
+### Features
+
+* **chunk:** implement changeset chunking for large diffs ([88ec6ae](https://github.com/Seungwoo321/genai-commit/commit/88ec6ae5c7275d20d226e74f94f17741cbca4813))
+* **exports:** expose chunking, clustering, and import-graph APIs ([7997221](https://github.com/Seungwoo321/genai-commit/commit/79972215a869d4af0914734f69b388668976d52d))
+* **git:** add cluster-aware chunking with import graph support ([9a8282b](https://github.com/Seungwoo321/genai-commit/commit/9a8282be03c569e5839a57c705542c3ce13a7dd0))
+* **git:** add import graph extraction for cluster-aware chunking ([fe3ac18](https://github.com/Seungwoo321/genai-commit/commit/fe3ac1871618bd78b231337d7887a01d621f4e9b))
+* **interactive:** disable feedback for multi-chunk runs ([7a27ba9](https://github.com/Seungwoo321/genai-commit/commit/7a27ba97e9efbb481aa512b061e6786188308199))
+* **merge:** add cross-chunk semantic merge logic ([32f5037](https://github.com/Seungwoo321/genai-commit/commit/32f5037a3b2a335c4baff4baa9dada3635bd1954))
+
+### Refactoring
+
+* **git:** extract bulk diff loader and add chunk planning tests ([e6af068](https://github.com/Seungwoo321/genai-commit/commit/e6af06821d778782fa197c08dbe59be7a44992b5))
+
+### Documentation
+
+* **readme:** add cluster-aware chunking and cross-chunk merge architecture ([125a64e](https://github.com/Seungwoo321/genai-commit/commit/125a64e94d2bd142bc8aceba516becebdf3adbea))
+## [1.12.7-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-29)
+
+### Bug Fixes
+
+* **ui:** skip stale commit re-render in interactive loop ([2a9c211](https://github.com/Seungwoo321/genai-commit/commit/2a9c21136e834d3bb9f0287a9b7bf15067da74c5))
+## [1.12.6-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** pause input stream in action prompt cleanup so process can exit ([a011d56](https://github.com/Seungwoo321/genai-commit/commit/a011d56cd18d5e6d5e1c7d7a95fbad37d19815ba))
+## [1.12.5-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** stop the action prompt from stacking the question on each move ([56810ff](https://github.com/Seungwoo321/genai-commit/commit/56810ff37710667fd622570d687c18a171e56e89))
+## [1.12.4-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-26)
+
+### Bug Fixes
+
+* **ui:** make y/n/f/t hotkeys move cursor in action prompt ([bfe2a84](https://github.com/Seungwoo321/genai-commit/commit/bfe2a844af0ac758e33e03a4ca0ebbec92745d6e))
+## [1.12.3-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-26)
+
+### Refactoring
+
+* **ui:** change action prompt from expand to list type ([db31b18](https://github.com/Seungwoo321/genai-commit/commit/db31b18083919d46d3db6da6063038854c491733))
+## [1.12.2-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.13.0-beta.0...v1.14.0-beta.0) (2026-04-25)
+
+### Bug Fixes
+
+* **ui:** bind hotkeys to action prompt using inquirer expand ([46626fc](https://github.com/Seungwoo321/genai-commit/commit/46626fc6ab7538c19f722d17076cb2786e306827))
+
 ## [1.13.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.7...v1.13.0) (2026-04-29)
 
 ## [1.13.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.12.7-beta.0...v1.13.0-beta.0) (2026-04-29)
