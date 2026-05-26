@@ -1,10 +1,18 @@
 declare module 'inquirer' {
+  interface PromptChoice {
+    value: unknown;
+    name: string;
+  }
+
   interface PromptQuestion {
     type: string;
     name: string;
     message: string;
-    choices?: Array<{ value: string; name: string }>;
+    choices?: PromptChoice[];
     default?: unknown;
+    validate?: (
+      input: string
+    ) => boolean | string | Promise<boolean | string>;
   }
 
   interface PromptModule {

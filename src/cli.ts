@@ -24,6 +24,9 @@ program
   .option('--message-lang <lang>', 'Language for commit message (en|ko)', 'ko')
   .option('--model <model>', 'Model to use (varies by provider; see: genai-commit models <provider>)')
   .option('--timeout <seconds>', 'AI provider timeout in seconds (default: 120)')
+  .option('--batches <n>', 'Split a multi-chunk run into n batches (default: prompt, or all at once when non-interactive)')
+  .option('--resume', 'Continue a saved plan from the next pending batch')
+  .option('--fresh', 'Discard any saved plan and re-plan from the current changeset')
   .action(generateCommand);
 
 // Login command: genai-commit login <provider>
@@ -60,14 +63,23 @@ Examples:
   $ genai-commit claude-code --lang ko    # Canonical name, Korean title and message
   $ genai-commit cursor --model gpt-4o    # Override model
 
+  $ genai-commit claude --batches 5       # Split a large run into 5 batches
+  $ genai-commit claude --resume          # Continue a saved plan's next batch
+  $ genai-commit claude --fresh           # Discard the saved plan and re-plan
+
   $ genai-commit login codex              # Login to Codex CLI
   $ genai-commit status claude            # Check Claude Code status
   $ genai-commit models cursor            # List supported models for Cursor
 
+Batched runs:
+  A large changeset is split into deterministic chunks and frozen to a plan so
+  the same changeset always yields the same split. Commit it in batches; if you
+  stop partway, re-run with --resume to continue where you left off.
+
 Interactive options:
-  [y] Commit all proposed commits
+  [y] Commit the proposed commits (the current batch, when batched)
   [n] Cancel
-  [f] Provide feedback to regenerate
+  [f] Provide feedback to regenerate (single-chunk batches only)
   [t] Assign Jira tickets and regroup commits
 `
 );
