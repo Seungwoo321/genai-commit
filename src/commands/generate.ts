@@ -85,6 +85,13 @@ export interface GenerateOptions {
   resume?: boolean;
   /** Discard any frozen plan and re-plan from the current changeset. */
   fresh?: boolean;
+  /**
+   * Non-interactive auto-confirm. Skips the [y]/[n]/[f]/[t] prompt entirely
+   * and commits the proposed set as-is. Aborts with non-zero exit if coverage
+   * is incomplete (no `[f] Feedback` retry available in this mode).
+   * Designed for CI runs and hook-driven workflows (e.g., airpilot-lite).
+   */
+  yes?: boolean;
 }
 
 /**
@@ -396,7 +403,10 @@ async function resolveBatchSize(
     return Math.ceil(chunkCount / Math.min(n, chunkCount));
   }
 
-  if (process.stdout.isTTY && process.stdin.isTTY) {
+  // --yes is non-interactive by contract: never call promptBatchCount even on
+  // a TTY, because the prompt would hang a CI/hook run. Falls back to the same
+  // "all chunks in a single batch" default as a piped invocation.
+  if (!options.yes && process.stdout.isTTY && process.stdin.isTTY) {
     return promptBatchCount(chunkCount);
   }
 
@@ -614,19 +624,42 @@ export async function generateCommand(
         config,
         feedbackEnabled,
         batchInfo,
+        autoConfirm: options.yes,
       });
 
-      if (loopResult === 'committed') {
+      if (loopResult.status === 'committed') {
         markChunksDone(plan, batchChunks.map((c) => c.index));
         await savePlan(plan);
       } else {
-        // Cancelled. Keep the frozen plan when chunks are already committed so
-        // `--resume` can finish the rest; otherwise nothing is in flight, so
-        // drop the plan to avoid a stale resume on the next run.
-        if (doneCount(plan) > 0) {
+        // Cancelled.
+        // Three sub-cases:
+        //  1. Partial commit in this batch (some commits landed before the
+        //     user stopped) — the frozen plan's chunk boundaries no longer
+        //     line up with what's left in the working tree, and
+        //     `isPlanFresh` would reject a `--resume`. Clear the plan so the
+        //     next run re-plans cleanly from the current changeset.
+        //  2. Nothing landed in this batch but prior batches did — keep the
+        //     plan so `--resume` can finish the rest.
+        //  3. Nothing landed anywhere — drop the plan to avoid a stale resume.
+        if (loopResult.landedCount > 0) {
+          logger.warning(
+            `Batch was partially committed ` +
+            `(${loopResult.landedCount}/${loopResult.totalCount}). ` +
+            'Discarding the saved plan since the remaining work no longer ' +
+            'matches it. Re-run genai-commit to plan from the current ' +
+            'changeset.'
+          );
+          await clearPlan();
+        } else if (doneCount(plan) > 0) {
           logger.info('Stopped. Re-run with --resume to continue from the next batch.');
         } else {
           await clearPlan();
+        }
+        // Unattended runs must propagate "did not commit cleanly" to the caller
+        // so CI / hooks / shell scripts can branch on it. Interactive cancel
+        // (without --yes) is a user choice, not a failure — keep its exit 0.
+        if (options.yes) {
+          process.exitCode = 1;
         }
         return;
       }
