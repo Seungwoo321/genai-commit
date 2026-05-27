@@ -42,14 +42,29 @@ interface ActionChoice {
 /**
  * Build the action list. The commit label is parameterized so a batched run
  * can say "Commit this batch" while a single-pass run keeps "Commit all".
+ *
+ * `[f] Provide feedback` is omitted when feedback is disabled (multi-chunk
+ * runs) rather than shown-and-refused. An action only appears here if
+ * selecting it does something — advertising a key that just prints a warning
+ * is the dead-option bug this gating fixes.
  */
-function buildChoices(commitLabel: string): ActionChoice[] {
-  return [
+function buildChoices(
+  commitLabel: string,
+  feedbackEnabled: boolean,
+  jiraEnabled: boolean,
+  cancelLabel: string
+): ActionChoice[] {
+  const choices: ActionChoice[] = [
     { key: 'y', value: 'commit', name: commitLabel },
-    { key: 'n', value: 'cancel', name: 'Cancel' },
-    { key: 'f', value: 'feedback', name: 'Provide feedback' },
-    { key: 't', value: 'jira', name: 'Assign Jira tickets' },
+    { key: 'n', value: 'cancel', name: cancelLabel },
   ];
+  if (feedbackEnabled) {
+    choices.push({ key: 'f', value: 'feedback', name: 'Provide feedback' });
+  }
+  if (jiraEnabled) {
+    choices.push({ key: 't', value: 'jira', name: 'Assign Jira tickets' });
+  }
+  return choices;
 }
 
 export interface PromptStreams {
@@ -85,11 +100,14 @@ function renderChoice(choice: ActionChoice, focused: boolean): string {
  */
 export async function promptAction(
   streams: PromptStreams = {},
-  commitLabel = 'Commit all'
+  commitLabel = 'Commit all',
+  feedbackEnabled = true,
+  jiraEnabled = true,
+  cancelLabel = 'Cancel'
 ): Promise<UserAction> {
   const input = (streams.input ?? process.stdin) as NodeJS.ReadStream;
   const output = (streams.output ?? process.stdout) as NodeJS.WriteStream;
-  const choices = buildChoices(commitLabel);
+  const choices = buildChoices(commitLabel, feedbackEnabled, jiraEnabled, cancelLabel);
 
   return new Promise<UserAction>((resolve) => {
     let cursor = 0;
@@ -302,26 +320,110 @@ export interface InteractiveLoopInput {
    * knows [y] commits only the current batch, not the whole changeset.
    */
   batchInfo?: { index: number; total: number };
+  /**
+   * Non-interactive mode (from `--yes`). Skips the [y]/[n]/[f]/[t] prompt and
+   * commits the current proposal directly when coverage is clean. With missing
+   * coverage the loop refuses the commit and returns `'cancelled'` so the
+   * caller can exit non-zero — CI / hook runs treat unattended ambiguity as a
+   * failure rather than silently producing an incomplete commit set. A partial
+   * batch failure (hook rejection, etc.) is likewise returned as `'cancelled'`
+   * with a non-zero `landedCount`; there is no operator at the keyboard to
+   * choose Retry vs Stop.
+   */
+  autoConfirm?: boolean;
 }
 
-export type LoopResult = 'committed' | 'cancelled';
+export interface LoopResult {
+  status: 'committed' | 'cancelled';
+  /** Commits in this batch that landed. `status === 'committed'` ⇒ `totalCount`. */
+  landedCount: number;
+  /** Total commits proposed when the loop exited. */
+  totalCount: number;
+}
 
 /**
  * Main interactive loop.
  *
- * Returns `'committed'` once a commit action succeeds and `'cancelled'` when
- * the user backs out. The batch orchestrator uses this to decide whether to
- * advance to the next batch (committed) or stop and keep the frozen plan for
- * a later resume (cancelled).
+ * Returns `status: 'committed'` once every commit lands and
+ * `status: 'cancelled'` when the user backs out. `landedCount` reports how
+ * many commits in the batch actually made it into git — non-zero on a
+ * `'cancelled'` result means the batch was partially committed (e.g. a
+ * pre-commit hook rejected commit K after 1..K-1 already landed). The batch
+ * orchestrator uses that to invalidate the frozen plan, since the remaining
+ * chunks no longer match the working tree.
+ *
+ * Retry semantics: once any commit in this batch has landed, the loop tracks
+ * the landed count and the next `[y]` only re-runs commits from the failed
+ * index onward. Without this slicing, a retry would restart at commit 0,
+ * which has nothing left to stage (already committed), and silently fail
+ * again — the exact "shown option does nothing" failure this design avoids.
  */
 export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<LoopResult> {
   const { provider, validFiles, originalInput, config } = params;
   const feedbackEnabled = params.feedbackEnabled ?? true;
   const batchInfo = params.batchInfo;
-  const commitLabel = batchInfo ? `Commit this batch (${batchInfo.index}/${batchInfo.total})` : 'Commit all';
+  const baseCommitLabel = batchInfo
+    ? `Commit this batch (${batchInfo.index}/${batchInfo.total})`
+    : 'Commit all';
   let commits = params.initialCommits;
   let lastResponse = params.initialResponse;
   let coverage = params.initialCoverage;
+
+  // --yes branch: no prompt, no retry. The interactive loop's retry semantics
+  // assume an operator can choose between Retry / Stop / Feedback / Jira on
+  // each iteration; an unattended run has no such operator, so a single
+  // attempt is the contract. Missing coverage or partial-batch failure is
+  // surfaced as `'cancelled'` for the caller to propagate via exit code.
+  if (params.autoConfirm) {
+    if (batchInfo) {
+      console.log(
+        chalk.cyan(`\n=== Batch ${batchInfo.index}/${batchInfo.total} ===`)
+      );
+    }
+    displayCommits(commits);
+    if (coverage.missing.length > 0) {
+      logger.error(
+        `Commit blocked (--yes): ${coverage.missing.length} changed file(s) ` +
+        `are not assigned to any commit. Re-run interactively to use [f] ` +
+        `Feedback, or fix the coverage gap upstream.`
+      );
+      return { status: 'cancelled', landedCount: 0, totalCount: commits.length };
+    }
+    const result = await executeCommits(commits);
+    const landedCount = result.successCount;
+    if (result.ok) {
+      return { status: 'committed', landedCount, totalCount: commits.length };
+    }
+    if (result.failure) {
+      const failingCommitNum = landedCount + 1;
+      const totalCommits = commits.length;
+      const landedSuffix =
+        landedCount > 0
+          ? ` Commits 1..${landedCount} in this batch already landed.`
+          : '';
+      switch (result.failure.kind) {
+        case 'hook':
+          logger.error(
+            `Commit ${failingCommitNum}/${totalCommits} was rejected by a ` +
+            `pre-commit hook (--yes mode: no retry).${landedSuffix}`
+          );
+          break;
+        case 'staging':
+          logger.error(
+            `Commit ${failingCommitNum}/${totalCommits} has no files left ` +
+            `to stage (--yes mode: no retry).${landedSuffix}`
+          );
+          break;
+        case 'unknown':
+          logger.error(
+            `Commit ${failingCommitNum}/${totalCommits} failed: ` +
+            `${result.failure.message} (--yes mode: no retry).${landedSuffix}`
+          );
+          break;
+      }
+    }
+    return { status: 'cancelled', landedCount, totalCount: commits.length };
+  }
   // Re-display only when the proposed commit set actually changes.
   // The previous unconditional re-print on every iteration buried the
   // outcome of the prior action — most importantly the
@@ -330,9 +432,17 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
   // mutation paths (`feedback` regen and `jira` merge) assign a new
   // array reference, so reference equality is sufficient.
   let displayedCommits: Commit[] | null = null;
+  // Commits in this batch that have already landed in git. Non-zero only
+  // after a partial-batch failure; gates the menu (no feedback / no jira
+  // once any commit is immutable) and slices the retry.
+  let landedCount = 0;
 
   while (true) {
-    if (commits !== displayedCommits) {
+    // After a partial commit `commits` is still the same reference, so the
+    // display cache would skip the redraw. Force a redraw whenever the partial
+    // state is in play so the user always sees the "X of Y already landed"
+    // header above the next prompt.
+    if (commits !== displayedCommits || landedCount > 0) {
       if (batchInfo) {
         console.log(
           chalk.cyan(`\n=== Batch ${batchInfo.index}/${batchInfo.total} ===`)
@@ -340,6 +450,12 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
       }
       displayCommits(commits);
       displayedCommits = commits;
+      if (landedCount > 0) {
+        logger.info(
+          `Already landed in this batch: ${landedCount}/${commits.length}. ` +
+          `Remaining: commits ${landedCount + 1}..${commits.length}.`
+        );
+      }
     }
 
     if (coverage.missing.length > 0) {
@@ -348,44 +464,106 @@ export async function runInteractiveLoop(params: InteractiveLoopInput): Promise<
       );
     }
 
-    console.log(
-      `${chalk.yellow('[y]')} ${commitLabel}  ` +
-      `${chalk.yellow('[n]')} Cancel  ` +
-      `${chalk.yellow('[f]')} Feedback  ` +
-      `${chalk.yellow('[t]')} Assign Jira tickets`
-    );
+    // After a partial commit, only Retry-as-is and Stop are safe: regenerating
+    // messages or merging Jira keys can't touch commits that already landed
+    // immutably in git, and would also re-shuffle the remaining commits in
+    // ways that no longer line up with the per-batch coverage check.
+    const hasPartial = landedCount > 0;
+    const effectiveFeedbackEnabled = feedbackEnabled && !hasPartial;
+    const effectiveJiraEnabled = !hasPartial;
+    const effectiveCommitLabel = hasPartial
+      ? `Retry from commit ${landedCount + 1}/${commits.length}`
+      : baseCommitLabel;
+    const effectiveCancelLabel = hasPartial ? 'Stop' : 'Cancel';
 
-    const action = await promptAction({}, commitLabel);
+    // Mirror the action menu: only advertise keys that actually do something.
+    const hintParts = [
+      `${chalk.yellow('[y]')} ${effectiveCommitLabel}`,
+      `${chalk.yellow('[n]')} ${effectiveCancelLabel}`,
+    ];
+    if (effectiveFeedbackEnabled) {
+      hintParts.push(`${chalk.yellow('[f]')} Feedback`);
+    }
+    if (effectiveJiraEnabled) {
+      hintParts.push(`${chalk.yellow('[t]')} Assign Jira tickets`);
+    }
+    console.log(hintParts.join('  '));
+
+    const action = await promptAction(
+      {},
+      effectiveCommitLabel,
+      effectiveFeedbackEnabled,
+      effectiveJiraEnabled,
+      effectiveCancelLabel
+    );
 
     switch (action) {
       case 'commit': {
         if (coverage.missing.length > 0) {
           logger.error(
             'Commit blocked: some changed files are uncovered. ' +
-            'Use [f] Feedback to regenerate with full coverage.'
+            (feedbackEnabled
+              ? 'Use [f] Feedback to regenerate with full coverage.'
+              : 'Cancel and re-run after addressing the missing files.')
           );
           break;
         }
-        const success = await executeCommits(commits);
-        if (success) {
-          return 'committed';
+        const remaining = commits.slice(landedCount);
+        const result = await executeCommits(remaining);
+        landedCount += result.successCount;
+        if (result.ok) {
+          return { status: 'committed', landedCount, totalCount: commits.length };
         }
+        if (result.failure) {
+          const failingCommitNum = landedCount + 1; // 1-based, absolute
+          const totalCommits = commits.length;
+          const landedSuffix =
+            landedCount > 0
+              ? ` Commits 1..${landedCount} in this batch already landed.`
+              : '';
+          switch (result.failure.kind) {
+            case 'hook':
+              logger.error(
+                `Commit ${failingCommitNum}/${totalCommits} was rejected by a ` +
+                `pre-commit hook. Fix the issues reported above in your editor, ` +
+                `then press [y] to retry from this commit.${landedSuffix}`
+              );
+              break;
+            case 'staging':
+              logger.error(
+                `Commit ${failingCommitNum}/${totalCommits} has no files left ` +
+                `to stage (files may have been modified or removed outside ` +
+                `genai-commit). Press [n] to stop and re-run.${landedSuffix}`
+              );
+              break;
+            case 'unknown':
+              logger.error(
+                `Commit ${failingCommitNum}/${totalCommits} failed: ` +
+                `${result.failure.message}. Press [y] to retry or [n] to ` +
+                `stop.${landedSuffix}`
+              );
+              break;
+          }
+        }
+        // Force the partial-state header to print above the next prompt even
+        // though the commits reference did not change.
+        displayedCommits = null;
         break;
       }
 
       case 'cancel':
-        logger.warning('Cancelled');
-        return 'cancelled';
+        if (landedCount > 0) {
+          logger.warning(
+            `Stopped after ${landedCount}/${commits.length} commits in this batch.`
+          );
+        } else {
+          logger.warning('Cancelled');
+        }
+        return { status: 'cancelled', landedCount, totalCount: commits.length };
 
       case 'feedback': {
-        if (!feedbackEnabled) {
-          logger.warning(
-            'Feedback regeneration is disabled for multi-chunk runs. ' +
-            'Re-run with a smaller --maxInputSize / fewer changes, or commit ' +
-            'as proposed and amend afterwards.'
-          );
-          break;
-        }
+        // Unreachable when feedback is disabled: buildChoices omits [f] for
+        // multi-chunk runs, so 'feedback' can only arrive here when enabled.
         const feedback = await promptFeedback();
 
         if (!feedback.trim()) {
