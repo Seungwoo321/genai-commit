@@ -27,6 +27,11 @@ program
   .option('--batches <n>', 'Split a multi-chunk run into n batches (default: prompt, or all at once when non-interactive)')
   .option('--resume', 'Continue a saved plan from the next pending batch')
   .option('--fresh', 'Discard any saved plan and re-plan from the current changeset')
+  .option(
+    '-y, --yes',
+    'Non-interactive: auto-confirm commit without [y] prompt. Skips feedback/jira actions. ' +
+      'Aborts with non-zero exit if coverage is incomplete instead of prompting.'
+  )
   .action(generateCommand);
 
 // Login command: genai-commit login <provider>
@@ -66,6 +71,8 @@ Examples:
   $ genai-commit claude --batches 5       # Split a large run into 5 batches
   $ genai-commit claude --resume          # Continue a saved plan's next batch
   $ genai-commit claude --fresh           # Discard the saved plan and re-plan
+  $ genai-commit claude --yes             # Non-interactive: auto-commit, skip [y] prompt
+  $ genai-commit claude -y --batches 1    # CI / hook-driven workflows: one batch, auto-confirm
 
   $ genai-commit login codex              # Login to Codex CLI
   $ genai-commit status claude            # Check Claude Code status
