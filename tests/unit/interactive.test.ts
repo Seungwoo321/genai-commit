@@ -177,4 +177,40 @@ describe('promptAction', () => {
       expect(caretLines).toHaveLength(1);
     });
   });
+
+  // Regression: multi-chunk runs disabled feedback in the handler but still
+  // listed [f] in the menu, so selecting it printed a warning and did nothing
+  // ("골라도 동작 안 함"). A disabled action must be absent from the menu, not
+  // shown-and-refused.
+  describe('feedbackEnabled gating', () => {
+    async function runDisabled(keys: string): Promise<PromptRun> {
+      const input = new PassThrough();
+      const output = new PassThrough();
+      const chunks: Buffer[] = [];
+      output.on('data', (c: Buffer) => chunks.push(c));
+      input.write(keys);
+      const result = await promptAction({ input, output }, 'Commit all', false);
+      return { result, output: Buffer.concat(chunks).toString('utf8') };
+    }
+
+    it('omits the Provide feedback row when feedback is disabled', async () => {
+      const { output } = await runDisabled(KEY_ENTER);
+      expect(output).not.toContain('Provide feedback');
+    });
+
+    it('treats the f hotkey as a no-op when feedback is disabled', async () => {
+      // No [f] choice exists, so 'f' matches nothing and the cursor stays on
+      // commit; Enter then submits commit instead of feedback.
+      expect((await runDisabled('f' + KEY_ENTER)).result).toBe('commit');
+    });
+
+    it('collapses the menu so two Downs land on jira (commit→cancel→jira)', async () => {
+      expect((await runDisabled(KEY_DOWN + KEY_DOWN + KEY_ENTER)).result).toBe('jira');
+    });
+
+    it('still lists feedback when enabled (default)', async () => {
+      const { output } = await runCapturing(KEY_ENTER);
+      expect(output).toContain('Provide feedback');
+    });
+  });
 });
