@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtemp, rm, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile, mkdir, chmod } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import simpleGit from 'simple-git';
@@ -166,7 +166,10 @@ describe('executeCommits', () => {
       { files: ['b.ts'], title: 'feat: second', message: 'x' },
     ]);
 
-    expect(result).toBe(false);
+    expect(result.ok).toBe(false);
+    expect(result.successCount).toBe(0);
+    expect(result.failure?.index).toBe(0);
+    expect(result.failure?.kind).toBe('staging');
     expect(await commitCount(root)).toBe(1); // only init; neither commit ran
     const log = await simpleGit(root).log();
     expect(log.all.some((c) => c.message.includes('feat: second'))).toBe(false);
@@ -185,5 +188,113 @@ describe('executeCommits', () => {
     await git.raw(['add', '-A', '--', 'top.ts']);
     const staged = (await git.raw(['diff', '--cached', '--name-only'])).trim();
     expect(staged).toBe('top.ts');
+  });
+
+  // Hook-rejection categorization + partial-batch retry.
+  //
+  // Regression for the "shown option does nothing" bug: when a pre-commit
+  // hook rejected commit K mid-batch, commits 1..K-1 landed but
+  // `executeCommits` reported only a boolean false. The loop's `[y]` retry
+  // would re-run from commit 0, find nothing to stage (already committed),
+  // and silently fail again. The new contract: surface a `hook` failure with
+  // `successCount` so the loop can slice the retry and start from K.
+  describe('hook rejection + partial-batch retry', () => {
+    /**
+     * Install a pre-commit hook driven by a persistent counter file:
+     *
+     *  - `'passThenFail'`: passes the first `n` invocations, rejects the rest.
+     *  - `'failThenPass'`: rejects the first `n` invocations, passes the rest.
+     *
+     * The counter lives in the worktree so it survives across `executeCommits`
+     * calls — that's the whole point of the retry test: the second call must
+     * see the hook in its updated state.
+     */
+    async function installCountingHook(
+      repoRoot: string,
+      mode: 'passThenFail' | 'failThenPass',
+      n: number
+    ): Promise<void> {
+      const counterPath = join(repoRoot, '.hook-counter');
+      const hookPath = join(repoRoot, '.git/hooks/pre-commit');
+      const failCond = mode === 'passThenFail' ? `[ $c -gt ${n} ]` : `[ $c -le ${n} ]`;
+      const script =
+        `#!/bin/sh\n` +
+        `c=$(cat "${counterPath}" 2>/dev/null || echo 0)\n` +
+        `c=$((c+1))\n` +
+        `echo $c > "${counterPath}"\n` +
+        `if ${failCond}; then\n` +
+        `  echo "husky - pre-commit hook failed (code 1)" >&2\n` +
+        `  exit 1\n` +
+        `fi\n` +
+        `exit 0\n`;
+      await writeFile(hookPath, script);
+      await chmod(hookPath, 0o755);
+    }
+
+    it('reports hook rejection with successCount of the commits that landed first', async () => {
+      root = await initRepo();
+      await writeFileIn(root, 'a.ts');
+      await writeFileIn(root, 'b.ts');
+      await isGitRepository(root);
+      // Hook passes once (commit 1) then rejects (commit 2).
+      await installCountingHook(root, 'passThenFail', 1);
+
+      const result = await executeCommits([
+        { files: ['a.ts'], title: 'feat: a', message: '' },
+        { files: ['b.ts'], title: 'feat: b', message: '' },
+      ]);
+
+      expect(result.ok).toBe(false);
+      expect(result.successCount).toBe(1);
+      expect(result.failure?.index).toBe(1);
+      expect(result.failure?.kind).toBe('hook');
+      // init + the one commit that survived the hook.
+      expect(await commitCount(root)).toBe(2);
+    });
+
+    it('lets a retry pick up from the failed commit when called with the remaining slice', async () => {
+      root = await initRepo();
+      await writeFileIn(root, 'a.ts');
+      await writeFileIn(root, 'b.ts');
+      await isGitRepository(root);
+      // Reject the first attempt, accept everything afterwards.
+      await installCountingHook(root, 'failThenPass', 1);
+
+      const first = await executeCommits([
+        { files: ['a.ts'], title: 'feat: a', message: '' },
+        { files: ['b.ts'], title: 'feat: b', message: '' },
+      ]);
+      expect(first.ok).toBe(false);
+      expect(first.successCount).toBe(0);
+      expect(first.failure?.kind).toBe('hook');
+
+      // Simulate the loop's retry path: slice off any landed commits (none
+      // here) and re-run. The hook now passes for the remaining attempts.
+      const remaining = [
+        { files: ['a.ts'], title: 'feat: a', message: '' },
+        { files: ['b.ts'], title: 'feat: b', message: '' },
+      ].slice(first.successCount);
+
+      const second = await executeCommits(remaining);
+      expect(second.ok).toBe(true);
+      expect(second.successCount).toBe(2);
+      expect(await commitCount(root)).toBe(3); // init + a + b
+    });
+
+    it('reports a successful batch with ok=true and full successCount', async () => {
+      root = await initRepo();
+      await writeFileIn(root, 'a.ts');
+      await writeFileIn(root, 'b.ts');
+      await isGitRepository(root);
+
+      const result = await executeCommits([
+        { files: ['a.ts'], title: 'feat: a', message: '' },
+        { files: ['b.ts'], title: 'feat: b', message: '' },
+      ]);
+
+      expect(result.ok).toBe(true);
+      expect(result.successCount).toBe(2);
+      expect(result.failure).toBeUndefined();
+    });
   });
 });

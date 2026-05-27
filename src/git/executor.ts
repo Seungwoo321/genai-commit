@@ -64,12 +64,72 @@ async function getStagedFiles(git: ReturnType<typeof getGit>): Promise<string[]>
 }
 
 /**
- * Execute a single commit
+ * Categorizes why a single commit attempt failed so the interactive loop can
+ * show an actionable message instead of just silently re-prompting.
+ *
+ *  - `hook`    : `git commit` was rejected by a pre-commit hook (husky /
+ *                lint-staged / any custom hook). The hook's own stderr was
+ *                already shown to the user; the loop will offer a retry after
+ *                they fix the reported issues in their editor.
+ *  - `staging` : nothing was staged (every file in the commit was missing,
+ *                deleted, or otherwise unavailable). Retrying with the same
+ *                commit can't succeed.
+ *  - `unknown` : `git commit` threw for a non-hook reason (config error,
+ *                signing failure, ...). The raw error is surfaced verbatim.
  */
-export async function executeCommit(
+export type CommitFailureKind = 'hook' | 'staging' | 'unknown';
+
+export interface CommitFailure {
+  /** 0-based index of the failing commit within the input array. */
+  index: number;
+  kind: CommitFailureKind;
+  /** Human-readable error message (already logged to the terminal). */
+  message: string;
+}
+
+export interface ExecuteResult {
+  ok: boolean;
+  /** Commits that landed before stopping. `ok === true` ⇒ `commits.length`. */
+  successCount: number;
+  /** Present iff `ok === false`. */
+  failure?: CommitFailure;
+}
+
+/**
+ * Markers we look for in simple-git's `commit` error message to recognize a
+ * pre-commit hook rejection. simple-git surfaces git's stderr verbatim, so
+ * for husky/lint-staged failures these strings are reliably present (husky
+ * prints "husky - pre-commit hook failed" on rejection; lint-staged prints
+ * its own banner). A false positive only changes the recovery message we
+ * show alongside the same retry capability, so the heuristic is safe.
+ */
+const HOOK_FAILURE_MARKERS = [
+  'husky',
+  'pre-commit',
+  'lint-staged',
+  'hook failed',
+];
+
+function isLikelyHookFailure(message: string): boolean {
+  const lower = message.toLowerCase();
+  return HOOK_FAILURE_MARKERS.some((needle) => lower.includes(needle));
+}
+
+interface SingleCommitResult {
+  ok: boolean;
+  failure?: { kind: CommitFailureKind; message: string };
+}
+
+/**
+ * Stage and commit one entry, returning a categorized result. The boolean
+ * `executeCommit` below is the back-compat shim for callers (and unit tests)
+ * that only need a yes/no answer; the interactive loop uses this helper
+ * directly so it can react to *why* a commit failed.
+ */
+async function tryStageAndCommit(
   commit: Commit,
   cwd?: string
-): Promise<boolean> {
+): Promise<SingleCommitResult> {
   const git = getGit(cwd);
 
   try {
@@ -90,10 +150,9 @@ export async function executeCommit(
     // would silently no-op. Verify something was actually staged.
     const stagedFiles = await getStagedFiles(git);
     if (stagedFiles.length === 0) {
-      logger.error(
-        `No files were staged (${failed}/${commit.files.length} failed). Aborting commit.`
-      );
-      return false;
+      const message = `No files were staged (${failed}/${commit.files.length} failed).`;
+      logger.error(`${message} Aborting commit.`);
+      return { ok: false, failure: { kind: 'staging', message } };
     }
 
     if (failed > 0) {
@@ -102,37 +161,84 @@ export async function executeCommit(
       );
     }
 
-    // Execute commit
+    // Execute commit. A throw here is almost always a pre-commit hook
+    // rejecting the change (eslint --fix found an error, tests failed, etc.);
+    // categorize so the loop can guide the user toward the editor instead of
+    // looping on the same dead state.
     logger.success(`Committing: ${title}`);
-    await git.commit([title, commit.message]);
+    try {
+      await git.commit([title, commit.message]);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const kind: CommitFailureKind = isLikelyHookFailure(message)
+        ? 'hook'
+        : 'unknown';
+      logger.error(
+        kind === 'hook'
+          ? 'Commit rejected by pre-commit hook (see hook output above).'
+          : `Commit failed: ${message}`
+      );
+      return { ok: false, failure: { kind, message } };
+    }
 
-    return true;
+    return { ok: true };
   } catch (error) {
-    logger.error(`Commit failed: ${error}`);
-    return false;
+    const message = error instanceof Error ? error.message : String(error);
+    logger.error(`Commit failed: ${message}`);
+    return { ok: false, failure: { kind: 'unknown', message } };
   }
 }
 
 /**
- * Execute all commits in order
+ * Execute a single commit. Returns `true` iff it landed.
+ *
+ * Back-compat wrapper around `tryStageAndCommit` for direct callers and
+ * tests; the multi-commit `executeCommits` returns the richer
+ * `ExecuteResult` because the loop needs to know *why* it stopped and which
+ * commits already landed.
+ */
+export async function executeCommit(
+  commit: Commit,
+  cwd?: string
+): Promise<boolean> {
+  const result = await tryStageAndCommit(commit, cwd);
+  return result.ok;
+}
+
+/**
+ * Execute the commit list in order, stopping at the first failure.
+ *
+ * Returns the index of the first failure and the count of commits that
+ * landed before it, so a caller (the interactive loop) can offer a retry
+ * that picks up from the failed commit instead of restarting from commit 0
+ * — which would silently fail on the already-landed prefix because their
+ * files have nothing left to stage.
  */
 export async function executeCommits(
   commits: Commit[],
   cwd?: string
-): Promise<boolean> {
+): Promise<ExecuteResult> {
   for (let i = 0; i < commits.length; i++) {
     const commit = commits[i];
     console.log(colors.yellow(`\nStaging files for commit ${i + 1}/${commits.length}...`));
 
-    const success = await executeCommit(commit, cwd);
-    if (!success) {
-      logger.error('Commit failed. Aborting.');
-      return false;
+    const result = await tryStageAndCommit(commit, cwd);
+    if (!result.ok) {
+      logger.error(`Stopped at commit ${i + 1}/${commits.length}.`);
+      return {
+        ok: false,
+        successCount: i,
+        failure: {
+          index: i,
+          kind: result.failure?.kind ?? 'unknown',
+          message: result.failure?.message ?? 'unknown error',
+        },
+      };
     }
 
     console.log('');
   }
 
   logger.success('All commits completed successfully!');
-  return true;
+  return { ok: true, successCount: commits.length };
 }
