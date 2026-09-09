@@ -8,6 +8,11 @@ import type { Commit, CommitResult } from '../types/commit.js';
  * Parse JSON response from Claude CLI
  */
 export function parseJsonResponse(raw: string): CommitResult {
+  // Providers are typed to pass a string, but a malformed provider response can
+  // leak undefined here; fail with the real cause instead of a TypeError.
+  if (typeof raw !== 'string' || raw.length === 0) {
+    throw new Error('Empty response from provider');
+  }
   try {
     const parsed = JSON.parse(raw);
 
