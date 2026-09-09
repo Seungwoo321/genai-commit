@@ -7,28 +7,46 @@ import type { CommitResult } from '../types/commit.js';
 import { execCommand, execSimple } from '../utils/exec.js';
 import { getPromptTemplate, getJsonSchema } from '../prompts/templates.js';
 import { parseJsonResponse } from '../parser/json.js';
-import { CLAUDE_DEFAULT_MODEL } from '../config/defaults.js';
+import { withModelFallback, reportModel } from './discovery.js';
 
 export class ClaudeCodeProvider implements AIProvider {
   readonly name = 'claude-code' as const;
   private sessionId?: string;
   private timeout: number;
-  private model: string;
+  /** Undefined means "resolve from the provider's own tier aliases at run time". */
+  private explicitModel?: string;
 
   constructor(options?: ProviderOptions) {
     this.timeout = options?.timeout ?? 120000;
-    this.model = options?.model ?? CLAUDE_DEFAULT_MODEL;
+    this.explicitModel = options?.model;
   }
 
   async generate(input: string, promptType: PromptType): Promise<ProviderResponse> {
     const prompt = getPromptTemplate('claude', promptType);
     const schema = getJsonSchema();
 
+    const schemaText = JSON.stringify(schema);
+
+    return withModelFallback({
+      provider: this.name,
+      explicitModel: this.explicitModel,
+      inputChars: input.length + prompt.length + schemaText.length,
+      onSelect: reportModel(this.name),
+      attempt: (model) => this.runOnce(input, prompt, schemaText, model),
+    });
+  }
+
+  private async runOnce(
+    input: string,
+    prompt: string,
+    schemaText: string,
+    model: string
+  ): Promise<ProviderResponse> {
     const args = [
       '-p',
-      '--model', this.model,
+      '--model', model,
       '--output-format', 'json',
-      '--json-schema', JSON.stringify(schema),
+      '--json-schema', schemaText,
       '--append-system-prompt', prompt,
     ];
 
@@ -42,20 +60,38 @@ export class ClaudeCodeProvider implements AIProvider {
     });
 
     if (result.exitCode !== 0) {
-      throw new Error(`Claude CLI failed: ${result.stderr}`);
+      // claude -p (especially with --output-format json) reports errors such as
+      // usage-limit or context overflow on stdout, not stderr.
+      const detail = [result.stderr, result.stdout]
+        .map((s) => s?.trim())
+        .filter(Boolean)
+        .join('\n');
+      throw new Error(`Claude CLI failed (exit ${result.exitCode}): ${detail || '(no output)'}`);
     }
 
+    let parsed: Record<string, unknown>;
     try {
-      const parsed = JSON.parse(result.stdout);
-      this.sessionId = parsed.session_id;
-
-      return {
-        raw: JSON.stringify(parsed.structured_output),
-        sessionId: this.sessionId,
-      };
+      parsed = JSON.parse(result.stdout);
     } catch {
       throw new Error(`Failed to parse Claude response: ${result.stdout}`);
     }
+    this.sessionId = typeof parsed.session_id === 'string' ? parsed.session_id : undefined;
+
+    // Error subtypes (usage limit, execution error, ...) exit 0 but carry no
+    // structured_output; stringifying undefined would leak `undefined` into the parser.
+    if (parsed.structured_output === undefined) {
+      const reason =
+        typeof parsed.result === 'string' ? parsed.result : JSON.stringify(parsed);
+      const subtype = typeof parsed.subtype === 'string' ? ` (${parsed.subtype})` : '';
+      throw new Error(
+        `Claude returned no structured output${subtype}: ${reason.substring(0, 500)}`
+      );
+    }
+
+    return {
+      raw: JSON.stringify(parsed.structured_output),
+      sessionId: this.sessionId,
+    };
   }
 
   parseResponse(response: ProviderResponse): CommitResult {

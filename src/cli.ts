@@ -22,7 +22,10 @@ program
   .option('--lang <lang>', 'Set both title and message language (en|ko)')
   .option('--title-lang <lang>', 'Language for commit title (en|ko)', 'en')
   .option('--message-lang <lang>', 'Language for commit message (en|ko)', 'ko')
-  .option('--model <model>', 'Model to use (varies by provider; see: genai-commit models <provider>)')
+  .option(
+    '--model <model>',
+    'Model to use. Default: the smallest model the input fits into, discovered from the provider (see: genai-commit models <provider>)'
+  )
   .option('--timeout <seconds>', 'AI provider timeout in seconds (default: 120)')
   .option('--batches <n>', 'Split a multi-chunk run into n batches (default: prompt, or all at once when non-interactive)')
   .option('--resume', 'Continue a saved plan from the next pending batch')
@@ -49,7 +52,7 @@ program
 // Models command: genai-commit models <provider>
 program
   .command('models <provider>')
-  .description('List supported models for a provider')
+  .description('List the models a provider currently offers')
   .action(modelsCommand);
 
 // Help examples
@@ -66,7 +69,7 @@ Examples:
   $ genai-commit cursor                   # Generate with Cursor CLI
   $ genai-commit codex                    # Generate with Codex CLI
   $ genai-commit claude-code --lang ko    # Canonical name, Korean title and message
-  $ genai-commit cursor --model gpt-4o    # Override model
+  $ genai-commit cursor --model <name>    # Override the auto-selected model
 
   $ genai-commit claude --batches 5       # Split a large run into 5 batches
   $ genai-commit claude --resume          # Continue a saved plan's next batch
@@ -76,7 +79,7 @@ Examples:
 
   $ genai-commit login codex              # Login to Codex CLI
   $ genai-commit status claude            # Check Claude Code status
-  $ genai-commit models cursor            # List supported models for Cursor
+  $ genai-commit models cursor            # List the models Cursor offers right now
 
 Batched runs:
   A large changeset is split into deterministic chunks and frozen to a plan so
@@ -91,4 +94,5 @@ Interactive options:
 `
 );
 
-program.parse();
+// Actions are async (provider discovery, generation) — parseAsync awaits them.
+program.parseAsync();

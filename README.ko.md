@@ -136,10 +136,10 @@ genai-commit claude
 genai-commit cursor
 genai-commit codex
 
-# 특정 모델 지정
-genai-commit cursor --model claude-4.5-sonnet
+# 자동 선택된 모델을 덮어쓰기
+# (계정에서 지금 쓸 수 있는 목록은 `genai-commit models <provider>`)
 genai-commit claude --model sonnet
-genai-commit codex --model gpt-5.4
+genai-commit codex --model <name>
 
 # 제목과 본문 언어를 동일하게 설정
 genai-commit claude --lang ko
@@ -188,7 +188,7 @@ genai-commit models codex
 | `--lang <lang>` | 제목과 본문 언어를 함께 설정 (en\|ko) | - |
 | `--title-lang <lang>` | 커밋 제목 언어 | `en` |
 | `--message-lang <lang>` | 커밋 본문 언어 | `ko` |
-| `--model <model>` | 사용할 모델 | `haiku` (Claude) / `claude-4.5-sonnet` (Cursor) / `gpt-5.4` (Codex) |
+| `--model <model>` | 사용할 모델 | 자동 — 입력이 들어가는 가장 작은 모델을 provider 에서 발견해 선택 |
 | `--timeout <seconds>` | AI 프로바이더 타임아웃 (초) | `120` |
 | `--batches <n>` | 다중 청크 실행을 n개 배치로 분할 | 프롬프트(인터랙티브) / 한 번에 전체(비인터랙티브) |
 | `--resume` | 저장된 플랜의 다음 대기 배치부터 이어서 진행 | - |
