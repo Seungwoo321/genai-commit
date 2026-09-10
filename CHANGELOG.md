@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.16.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.16.0...v1.16.1-beta.0) (2026-09-10)
+
+### Bug Fixes
+
+* **discovery:** refine model rejection heuristics for quota fallback ([668a8ce](https://github.com/Seungwoo321/genai-commit/commit/668a8ce4d495cc20ee33a8eeec9a0b712ef196d3))
+
 ## [1.16.0](https://github.com/Seungwoo321/genai-commit/compare/v1.16.0-beta.0...v1.16.0) (2026-09-09)
 
 ## [1.16.0-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.15.0-beta.0...v1.16.0-beta.0) (2026-09-09)

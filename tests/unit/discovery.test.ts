@@ -96,6 +96,25 @@ describe('isModelRejection', () => {
   it('does not treat a network fault as a model problem', () => {
     expect(isModelRejection('connect ECONNREFUSED 127.0.0.1:443')).toBe(false);
   });
+
+  it('switches models when the provider says the quota belongs to that model', () => {
+    // The real message that stalled a run: spark was out of allowance while every
+    // other model still had some, and the provider spells out the remedy.
+    const real =
+      "You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, " +
+      'or try again at Sep 10th, 2026 2:27 AM.';
+    expect(isModelRejection(real, 'gpt-5.3-codex-spark')).toBe(true);
+  });
+
+  it('recognises a per-model quota even without the remedy sentence', () => {
+    expect(isModelRejection('Usage limit reached for gpt-5.6-luna', 'gpt-5.6-luna')).toBe(true);
+  });
+
+  it('still refuses to switch on an account-wide limit', () => {
+    // No model is named, so every candidate shares the same wall — stepping
+    // through them would burn the list for nothing.
+    expect(isModelRejection('Usage limit reached. Try again later.', 'gpt-5.6-luna')).toBe(false);
+  });
 });
 
 describe('discoverModels(codex)', () => {
