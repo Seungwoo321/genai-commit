@@ -203,28 +203,51 @@ export function clearDiscoveryCache(): void {
   cache.clear();
 }
 
+/** The model itself cannot serve this request. */
+const UNAVAILABLE = [
+  'not supported',
+  'not found',
+  'unrecognized',
+  "isn't described",
+  'does not exist',
+  'may not exist',
+  'invalid_request_error',
+  'unknown model',
+  'no access',
+  'context length',
+  'context window',
+  'too long',
+];
+
+/** Exhausted allowance. Whose allowance it is decides whether switching helps. */
+const EXHAUSTED = ['usage limit', 'rate limit', 'quota', 'limit reached'];
+
 /**
  * Does this failure mean "that model is not usable", as opposed to a real error?
- * Only such failures may advance to the next candidate; retrying a rate limit or
- * a network fault against a different model would just burn the candidate list.
+ * Only such failures may advance to the next candidate.
+ *
+ * Quota is the subtle case, and both readings are wrong on their own. An
+ * account-wide limit names no model, and stepping through candidates there just
+ * burns the list against a wall that every one of them shares. A *per-model*
+ * limit is the opposite: the allowance belongs to that one model, another model
+ * still serves, and the provider says so outright — "You've hit your usage limit
+ * for <model>. Switch to another model now." So a limit counts as a rejection
+ * only when the message ties itself to the model that was actually attempted.
  */
-export function isModelRejection(message: string): boolean {
+export function isModelRejection(message: string, model?: string): boolean {
   const m = message.toLowerCase();
-  const mentionsModel = m.includes('model');
-  const rejected =
-    m.includes('not supported') ||
-    m.includes('not found') ||
-    m.includes('unrecognized') ||
-    m.includes("isn't described") ||
-    m.includes('does not exist') ||
-    m.includes('may not exist') ||
-    m.includes('invalid_request_error') ||
-    m.includes('unknown model') ||
-    m.includes('no access') ||
-    m.includes('context length') ||
-    m.includes('context window') ||
-    m.includes('too long');
-  return mentionsModel && rejected;
+
+  // The provider naming the remedy is the strongest signal there is.
+  if (m.includes('switch to another model')) return true;
+
+  const slug = model?.toLowerCase();
+  const namesAttemptedModel = slug ? m.includes(slug) : false;
+
+  if ((m.includes('model') || namesAttemptedModel) && UNAVAILABLE.some((p) => m.includes(p))) {
+    return true;
+  }
+
+  return namesAttemptedModel && EXHAUSTED.some((p) => m.includes(p));
 }
 
 /**
@@ -278,7 +301,7 @@ export async function withModelFallback<T>(opts: {
       return await attempt(model);
     } catch (e) {
       const err = e as Error;
-      if (!isModelRejection(err.message)) throw err;
+      if (!isModelRejection(err.message, model)) throw err;
       lastError = err;
     }
   }
