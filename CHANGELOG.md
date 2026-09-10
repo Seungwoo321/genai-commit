@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.16.1](https://github.com/Seungwoo321/genai-commit/compare/v1.16.1-beta.0...v1.16.1) (2026-09-10)
+
 ## [1.16.1-beta.0](https://github.com/Seungwoo321/genai-commit/compare/v1.16.0...v1.16.1-beta.0) (2026-09-10)
 
 ### Bug Fixes
